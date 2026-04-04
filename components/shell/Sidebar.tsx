@@ -29,39 +29,26 @@ const CORE_NAV: NavItem[] = [
   },
   {
     href:  "/compare",
-    label: "Compare",
+    label: "Comparison drug",
     icon:  <CompareIcon />,
   },
   {
-    href:  "/upload",
-    label: "Upload & Extract",
-    icon:  <UploadIcon />,
+    href:  "/changes",
+    label: "Change tracker",
+    icon:  <ChangeIcon />,
   },
 ];
 
-const REPORTS_NAV: NavItem[] = [
+const PLAYGROUND_NAV: NavItem[] = [
   {
-    href:  "/diff",
-    label: "Quarterly Diff",
-    icon:  <DiffIcon />,
+    href:  "/ingestion",
+    label: "Policy Ingestion",
+    icon:  <IngestionIcon />,
   },
   {
-    href:  "/alerts",
-    label: "Alerts",
-    icon:  <AlertIcon />,
-  },
-];
-
-const SETTINGS_NAV: NavItem[] = [
-  {
-    href:  "/settings/payer-config",
-    label: "Payer Config",
-    icon:  <SettingsIcon />,
-  },
-  {
-    href:  "/settings/workspace",
-    label: "Workspace",
-    icon:  <WorkspaceIcon />,
+    href:  "/policy-lib",
+    label: "Policy Library",
+    icon:  <LibraryIcon />,
   },
 ];
 
@@ -117,15 +104,25 @@ export function Sidebar() {
           expanded={expanded}
           pathname={pathname}
         />
+        {/* Divider */}
+        <AnimatePresence>
+          {expanded && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.12 }}
+              className="mx-[14px] my-3"
+              style={{
+                height: "0.5px",
+                background: "#E8EBF2",
+              }}
+            />
+          )}
+        </AnimatePresence>
         <NavGroup
-          label="REPORTS"
-          items={REPORTS_NAV}
-          expanded={expanded}
-          pathname={pathname}
-        />
-        <NavGroup
-          label="SETTINGS"
-          items={SETTINGS_NAV}
+          label="PLAYGROUND"
+          items={PLAYGROUND_NAV}
           expanded={expanded}
           pathname={pathname}
         />
@@ -279,6 +276,14 @@ function GridIcon() {
   );
 }
 
+function CompareIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M2 4h5M2 8h5M2 12h5M9 4h5M9 8h5M9 12h5" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function SearchIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -288,56 +293,31 @@ function SearchIcon() {
   );
 }
 
-function CompareIcon() {
+function IngestionIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <path d="M2 4h5M2 8h5M2 12h5M9 4h5M9 8h5M9 12h5" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
+      <path d="M8 3v8M4 7l4-4 4 4" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M3 13h10" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
     </svg>
   );
 }
 
-function UploadIcon() {
+function ChangeIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <path d="M8 10V3M5 6L8 3L11 6" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M3 12h10" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
+      <path d="M2 4l3-3 3 3" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5 1h5" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
+      <path d="M14 12l-3 3-3-3" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M11 15H6" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
     </svg>
   );
 }
 
-function DiffIcon() {
+function LibraryIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <path d="M3 5h10M3 8h7M3 11h9" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
-      <circle cx="13" cy="11" r="2" fill="#D4880A" />
-    </svg>
-  );
-}
-
-function AlertIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <path d="M8 2L14 13H2L8 2Z" stroke="currentColor" strokeWidth="1.25" strokeLinejoin="round" />
-      <path d="M8 7v3" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
-      <circle cx="8" cy="11.5" r="0.75" fill="currentColor" />
-    </svg>
-  );
-}
-
-function SettingsIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.25" />
-      <path d="M8 1v2M8 13v2M1 8h2M13 8h2M2.93 2.93l1.41 1.41M11.66 11.66l1.41 1.41M2.93 13.07l1.41-1.41M11.66 4.34l1.41-1.41" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function WorkspaceIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <rect x="1" y="3" width="14" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.25" />
-      <path d="M5 13v2M11 13v2M3 15h10" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
+      <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
+      <path d="M6 4v8M10 4v8" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
     </svg>
   );
 }

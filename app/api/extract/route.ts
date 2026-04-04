@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
 
 function deserializePolicy(row: Record<string, unknown>): PolicyDocument {
   return {
-    ...(row as PolicyDocument),
+    ...(row as unknown as PolicyDocument),
     step_therapy_drugs: JSON.parse(row.step_therapy_drugs as string ?? '[]'),
     indications:        JSON.parse(row.indications as string ?? '[]'),
     changed_fields:     JSON.parse(row.changed_fields as string ?? '[]'),

@@ -13,7 +13,7 @@ interface CoverageTableProps {
 const DISPLAY_PAYERS = ["aetna", "uhc", "cigna", "bcbs-tx"];
 
 export function CoverageTable({ policies, loading = false }: CoverageTableProps) {
-  const drugs = [...new Set(policies.map((p) => p.drug_name))].slice(0, 8);
+  const drugs = Array.from(new Set(policies.map((p) => p.drug_name))).slice(0, 8);
   const policyMap = new Map(
     policies.map((p) => [`${p.drug_id}:${p.payer_id}`, p])
   );
