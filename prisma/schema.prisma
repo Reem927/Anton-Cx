@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model PolicyDocument {
+  id                  String   @id @default(uuid())
+  payer_id            String
+  drug_name           String
+  drug_generic        String
+  j_code              String   @default("")
+  coverage_status     String   // 'covered' | 'pa_required' | 'denied' | 'not_covered'
+  prior_auth_required Boolean  @default(false)
+  prior_auth_criteria String   @default("")
+  step_therapy        Boolean  @default(false)
+  step_therapy_drugs  String   @default("[]") // JSON-encoded string[]
+  site_of_care        String?
+  indications         String   @default("[]") // JSON-encoded string[]
+  quantity_limit      String?
+  clinical_criteria   String?
+  renewal_period      String?
+  policy_version      String
+  effective_date      String   // ISO date YYYY-MM-DD
+  source_pdf_url      String?
+  extracted_at        String   // ISO datetime
+  changed_fields      String   @default("[]") // JSON-encoded string[]
+  drug_id             String   // lowercase slug from drug_generic
+
+  @@unique([payer_id, drug_id, effective_date])
+  @@index([payer_id])
+  @@index([drug_id])
+  @@index([coverage_status])
+  @@map("policy_documents")
+}
