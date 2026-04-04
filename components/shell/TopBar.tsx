@@ -142,23 +142,6 @@ export function TopBar({
 
         {/* Persona switcher */}
         <PersonaSwitcher current={persona} onChange={onPersonaChange} />
-
-        {/* Avatar */}
-        <div
-          className="flex items-center justify-center rounded-full flex-shrink-0"
-          style={{
-            width:      "28px",
-            height:     "28px",
-            background: "#1B3A6B",
-            fontFamily: "var(--font-syne), Syne, sans-serif",
-            fontSize:   "11px",
-            fontWeight: 700,
-            color:      "#FFFFFF",
-            cursor:     "pointer",
-          }}
-        >
-          A
-        </div>
       </div>
     </header>
   );
