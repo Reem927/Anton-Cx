@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -52,15 +52,22 @@ const PLAYGROUND_NAV: NavItem[] = [
   },
 ];
 
-export function Sidebar() {
-  const [expanded, setExpanded] = useState(true);
+interface SidebarProps {
+  expanded: boolean;
+  onToggle: () => void;
+}
+
+export function Sidebar({ expanded, onToggle }: SidebarProps) {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const pathname   = usePathname();
 
   // Persist state in localStorage
   useEffect(() => {
     const stored = localStorage.getItem(SIDEBAR_KEY);
-    if (stored !== null) setExpanded(stored === "true");
+    if (stored !== null && stored !== String(expanded)) {
+      onToggle();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -191,25 +198,6 @@ export function Sidebar() {
       </div>
     </motion.aside>
   );
-}
-
-// Expose toggle so TopBar can call it
-export function useSidebarState() {
-  const [expanded, setExpanded] = useState(true);
-
-  useEffect(() => {
-    const stored = localStorage.getItem(SIDEBAR_KEY);
-    if (stored !== null) setExpanded(stored === "true");
-  }, []);
-
-  const toggle = () => {
-    setExpanded((prev) => {
-      localStorage.setItem(SIDEBAR_KEY, String(!prev));
-      return !prev;
-    });
-  };
-
-  return { expanded, toggle };
 }
 
 function NavGroup({
