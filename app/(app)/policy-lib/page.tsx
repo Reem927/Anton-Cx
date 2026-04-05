@@ -1,46 +1,39 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { SEED_POLICIES } from "@/lib/seed-data";
 import { LibraryToolbar, type SortOption, type ViewMode } from "@/components/library/LibraryToolbar";
 import { PolicyCard }        from "@/components/library/PolicyCard";
 import { PolicyListTable }   from "@/components/library/PolicyListTable";
 import { PolicyContextMenu } from "@/components/library/PolicyContextMenu";
+import { PAYER_DISPLAY }     from "@/components/library/utils";
 import type { PolicyDocument } from "@/lib/types";
 
-// ─── Derived constants ────────────────────────────────────────────────────────
+// ─── Drug group type ─────────────────────────────────────────────────────────
 
-const ALL_PAYERS = Array.from(new Set(SEED_POLICIES.map(p => p.payer_id))).sort();
-const UNIQUE_PAYER_COUNT = ALL_PAYERS.length;
-const TOTAL_COUNT = SEED_POLICIES.length;
+export interface DrugGroup {
+  drug_name:    string;
+  drug_generic: string;
+  j_code:       string;
+  policies:     PolicyDocument[];
+  payer_ids:    string[];
+  /** Most recent effective date across all payers */
+  effective_date: string;
+  /** True if any policy in the group has changed_fields */
+  hasChanges:   boolean;
+}
 
-const lastSynced = SEED_POLICIES.reduce(
-  (acc, p) => (p.extracted_at > acc ? p.extracted_at : acc),
-  ""
-);
-const LAST_SYNCED_LABEL = new Date(lastSynced).toLocaleDateString("en-US", {
-  month: "short", day: "numeric", year: "numeric",
-});
-
-const COL_TEMPLATE: Record<number, string> = {
-  2: "repeat(2, 1fr)",
-  3: "repeat(3, 1fr)",
-  4: "repeat(4, 1fr)",
-  5: "repeat(5, 1fr)",
-};
-
-// ─── Filter + sort logic ──────────────────────────────────────────────────────
+// ─── Filter + group logic ────────────────────────────────────────────────────
 
 function applyFilters(
-  policies:     PolicyDocument[],
-  search:       string,
-  payerFilter:  string,
-  statusFilter: string,
-  sort:         SortOption,
+  policies:       PolicyDocument[],
+  search:         string,
+  payerFilter:    string,
+  coverageFilter: string,
+  tierFilter:     string,
 ): PolicyDocument[] {
   const q = search.toLowerCase();
-  const filtered = policies.filter(p => {
+  return policies.filter(p => {
     if (q) {
       const matches =
         p.drug_name.toLowerCase().includes(q) ||
@@ -49,48 +42,153 @@ function applyFilters(
         p.payer_id.toLowerCase().includes(q);
       if (!matches) return false;
     }
-    if (payerFilter  && p.payer_id         !== payerFilter)  return false;
-    if (statusFilter && p.coverage_status  !== statusFilter) return false;
+    if (payerFilter    && p.payer_id        !== payerFilter)    return false;
+    if (coverageFilter && p.coverage_status !== coverageFilter) return false;
+    if (tierFilter) {
+      if (tierFilter === "none") {
+        if (p.formulary_tier !== null) return false;
+      } else {
+        if (p.formulary_tier !== tierFilter) return false;
+      }
+    }
     return true;
   });
+}
 
-  return [...filtered].sort((a, b) => {
+function groupByDrug(policies: PolicyDocument[], sort: SortOption): DrugGroup[] {
+  const map = new Map<string, DrugGroup>();
+
+  for (const p of policies) {
+    const key = p.drug_generic.toLowerCase();
+    const existing = map.get(key);
+    if (existing) {
+      existing.policies.push(p);
+      if (!existing.payer_ids.includes(p.payer_id)) existing.payer_ids.push(p.payer_id);
+      if (p.effective_date > existing.effective_date) existing.effective_date = p.effective_date;
+      if (p.changed_fields.length > 0) existing.hasChanges = true;
+    } else {
+      map.set(key, {
+        drug_name:      p.drug_name,
+        drug_generic:   p.drug_generic,
+        j_code:         p.j_code,
+        policies:       [p],
+        payer_ids:      [p.payer_id],
+        effective_date: p.effective_date,
+        hasChanges:     p.changed_fields.length > 0,
+      });
+    }
+  }
+
+  const groups = Array.from(map.values());
+
+  return groups.sort((a, b) => {
     switch (sort) {
       case "recent":
         return new Date(b.effective_date).getTime() - new Date(a.effective_date).getTime();
       case "drug":
         return a.drug_name.localeCompare(b.drug_name);
       case "payer":
-        return a.payer_id.localeCompare(b.payer_id);
-      case "changed":
-        return b.changed_fields.length - a.changed_fields.length;
+        return a.payer_ids.length - b.payer_ids.length;
+      case "changed": {
+        const ac = a.policies.filter(p => p.changed_fields.length > 0).length;
+        const bc = b.policies.filter(p => p.changed_fields.length > 0).length;
+        return bc - ac;
+      }
     }
   });
+}
+
+// ─── PDF download helper ─────────────────────────────────────────────────────
+
+async function downloadPolicyPdf(drugGeneric: string, drugName: string) {
+  const res = await fetch(`/api/generate-pdf?drug=${encodeURIComponent(drugGeneric)}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: "Download failed" }));
+    throw new Error(err.error ?? "Download failed");
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${drugName.replace(/\s+/g, "-")}-policy-report.pdf`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function PolicyLibraryPage() {
-  const [view,         setView]         = useState<ViewMode>("card");
-  const [cols,         setCols]         = useState(3);
-  const [search,       setSearch]       = useState("");
-  const [payerFilter,  setPayerFilter]  = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [sort,         setSort]         = useState<SortOption>("recent");
-  const [selectedIds,  setSelectedIds]  = useState<Set<string>>(new Set());
-  const [contextMenu,  setContextMenu]  = useState<{
+  const [policies,       setPolicies]       = useState<PolicyDocument[]>([]);
+  const [loading,        setLoading]        = useState(true);
+  const [view,           setView]           = useState<ViewMode>("card");
+  const [cols,           setCols]           = useState(3);
+  const [search,         setSearch]         = useState("");
+  const [payerFilter,    setPayerFilter]    = useState("");
+  const [coverageFilter, setCoverageFilter] = useState("");
+  const [tierFilter,     setTierFilter]     = useState("");
+  const [sort,           setSort]           = useState<SortOption>("recent");
+  const [selectedIds,    setSelectedIds]    = useState<Set<string>>(new Set());
+  const [contextMenu,    setContextMenu]    = useState<{
     policyId: string; x: number; y: number;
   } | null>(null);
+  const [downloading,    setDownloading]    = useState(false);
+
+  // Fetch from Supabase on mount
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchPolicies() {
+      try {
+        const res = await fetch("/api/policies");
+        if (!res.ok) throw new Error("fetch failed");
+        const data: PolicyDocument[] = await res.json();
+        if (!cancelled) setPolicies(data);
+      } catch {
+        // Supabase unavailable — show empty state
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    fetchPolicies();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Derive payer list from actual data
+  const allPayers = useMemo(() => {
+    const ids = Array.from(new Set(policies.map(p => p.payer_id))).sort();
+    return ids.map(id => ({
+      id,
+      label: PAYER_DISPLAY[id] ?? id.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
+    }));
+  }, [policies]);
+
+  const uniquePayers = allPayers.length;
+  const totalCount = policies.length;
+
+  const lastSynced = useMemo(() => {
+    const latest = policies.reduce(
+      (acc, p) => (p.extracted_at > acc ? p.extracted_at : acc), "",
+    );
+    return latest
+      ? new Date(latest).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+      : "—";
+  }, [policies]);
 
   const filtered = useMemo(
-    () => applyFilters(SEED_POLICIES, search, payerFilter, statusFilter, sort),
-    [search, payerFilter, statusFilter, sort]
+    () => applyFilters(policies, search, payerFilter, coverageFilter, tierFilter),
+    [policies, search, payerFilter, coverageFilter, tierFilter],
   );
 
-  const changedPolicies   = useMemo(() => filtered.filter(p => p.changed_fields.length > 0), [filtered]);
-  const unchangedPolicies = useMemo(() => filtered.filter(p => p.changed_fields.length === 0), [filtered]);
+  const groups = useMemo(
+    () => groupByDrug(filtered, sort),
+    [filtered, sort],
+  );
+
+  const changedGroups   = useMemo(() => groups.filter(g => g.hasChanges), [groups]);
+  const unchangedGroups = useMemo(() => groups.filter(g => !g.hasChanges), [groups]);
   const showSections =
-    sort === "recent" && changedPolicies.length > 0 && unchangedPolicies.length > 0;
+    sort === "recent" && changedGroups.length > 0 && unchangedGroups.length > 0;
 
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds(prev => {
@@ -103,6 +201,52 @@ export default function PolicyLibraryPage() {
   const openContextMenu = useCallback((id: string, x: number, y: number) => {
     setContextMenu({ policyId: id, x, y });
   }, []);
+
+  // ── Context menu + card download handler ────────────────────
+
+  const triggerDownload = useCallback(async (group: DrugGroup) => {
+    setDownloading(true);
+    try {
+      await downloadPolicyPdf(group.drug_generic, group.drug_name);
+    } catch (err) {
+      console.error("PDF download failed:", err);
+    } finally {
+      setDownloading(false);
+    }
+  }, []);
+
+  const handleAction = useCallback(async (action: string) => {
+    if (!contextMenu) return;
+    // contextMenu.policyId is now drug_generic key
+    const group = groups.find(g => g.drug_generic.toLowerCase() === contextMenu.policyId);
+    if (!group) return;
+
+    switch (action) {
+      case "download":
+        await triggerDownload(group);
+        break;
+      case "open":
+        // Future: navigate to policy detail page
+        break;
+      case "diff":
+        // Future: open diff viewer
+        break;
+      case "compare":
+        // Future: add to comparison set
+        break;
+      case "remove":
+        // Remove all policies in this group from local state
+        setPolicies(prev => prev.filter(p => p.drug_generic.toLowerCase() !== group.drug_generic.toLowerCase()));
+        break;
+    }
+  }, [contextMenu, groups, triggerDownload]);
+
+  const COL_TEMPLATE: Record<number, string> = {
+    2: "repeat(2, 1fr)",
+    3: "repeat(3, 1fr)",
+    4: "repeat(4, 1fr)",
+    5: "repeat(5, 1fr)",
+  };
 
   return (
     <div style={{ padding: "28px 32px", maxWidth: "1400px", margin: "0 auto" }}>
@@ -127,23 +271,57 @@ export default function PolicyLibraryPage() {
             margin:     0,
           }}
         >
-          {TOTAL_COUNT} policies · {UNIQUE_PAYER_COUNT} payers · Last synced {LAST_SYNCED_LABEL}
+          {loading ? "Loading…" : `${totalCount} policies · ${groups.length} drugs · ${uniquePayers} payers · Last synced ${lastSynced}`}
         </p>
       </div>
+
+      {downloading && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{
+            background:   "#EBF0FC",
+            borderWidth:  "0.5px",
+            borderStyle:  "solid",
+            borderColor:  "#C4D4F8",
+            borderRadius: "8px",
+            padding:      "10px 16px",
+            marginBottom: "16px",
+            fontFamily:   "var(--font-dm-sans), 'DM Sans', sans-serif",
+            fontSize:     "13px",
+            color:        "#1B3A6B",
+            display:      "flex",
+            alignItems:   "center",
+            gap:          "10px",
+          }}
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            style={{
+              width: 14, height: 14, borderRadius: "50%",
+              border: "2px solid #C4D4F8", borderTopColor: "#2E6BE6",
+            }}
+          />
+          Generating PDF report…
+        </motion.div>
+      )}
 
       <div style={{ marginBottom: "20px" }}>
         <LibraryToolbar
           search={search}
           payerFilter={payerFilter}
-          statusFilter={statusFilter}
+          coverageFilter={coverageFilter}
+          tierFilter={tierFilter}
           sort={sort}
           view={view}
           cols={cols}
           resultCount={filtered.length}
-          allPayers={ALL_PAYERS}
+          allPayers={allPayers}
           onSearch={setSearch}
           onPayer={setPayerFilter}
-          onStatus={setStatusFilter}
+          onCoverage={setCoverageFilter}
+          onTier={setTierFilter}
           onSort={setSort}
           onView={setView}
           onCols={setCols}
@@ -160,19 +338,19 @@ export default function PolicyLibraryPage() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
           >
-            {filtered.length === 0 ? (
-              <EmptyState />
+            {groups.length === 0 ? (
+              <EmptyState loading={loading} />
             ) : showSections ? (
               <>
                 <SectionLabel label="Recently changed" />
-                <PolicyGrid policies={changedPolicies} cols={cols} selectedIds={selectedIds} indexOffset={0} onSelect={toggleSelect} onContextMenu={openContextMenu} />
+                <DrugGroupGrid groups={changedGroups} cols={cols} selectedIds={selectedIds} indexOffset={0} onSelect={toggleSelect} onContextMenu={openContextMenu} onDownload={triggerDownload} colTemplate={COL_TEMPLATE} />
                 <SectionLabel label="All policies" style={{ marginTop: "24px" }} />
-                <PolicyGrid policies={unchangedPolicies} cols={cols} selectedIds={selectedIds} indexOffset={changedPolicies.length} onSelect={toggleSelect} onContextMenu={openContextMenu} />
+                <DrugGroupGrid groups={unchangedGroups} cols={cols} selectedIds={selectedIds} indexOffset={changedGroups.length} onSelect={toggleSelect} onContextMenu={openContextMenu} onDownload={triggerDownload} colTemplate={COL_TEMPLATE} />
               </>
             ) : (
               <>
                 <SectionLabel label="All policies" />
-                <PolicyGrid policies={filtered} cols={cols} selectedIds={selectedIds} indexOffset={0} onSelect={toggleSelect} onContextMenu={openContextMenu} />
+                <DrugGroupGrid groups={groups} cols={cols} selectedIds={selectedIds} indexOffset={0} onSelect={toggleSelect} onContextMenu={openContextMenu} onDownload={triggerDownload} colTemplate={COL_TEMPLATE} />
               </>
             )}
           </motion.div>
@@ -184,14 +362,13 @@ export default function PolicyLibraryPage() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
           >
-            {filtered.length === 0 ? (
-              <EmptyState />
+            {groups.length === 0 ? (
+              <EmptyState loading={loading} />
             ) : (
               <PolicyListTable
-                policies={filtered}
-                selectedIds={selectedIds}
-                onSelect={toggleSelect}
+                groups={groups}
                 onContextMenu={openContextMenu}
+                onDownload={triggerDownload}
               />
             )}
           </motion.div>
@@ -204,7 +381,7 @@ export default function PolicyLibraryPage() {
           x={contextMenu.x}
           y={contextMenu.y}
           onClose={() => setContextMenu(null)}
-          onAction={() => {}}
+          onAction={handleAction}
         />
       )}
     </div>
@@ -213,32 +390,35 @@ export default function PolicyLibraryPage() {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function PolicyGrid({
-  policies, cols, selectedIds, indexOffset, onSelect, onContextMenu,
+function DrugGroupGrid({
+  groups, cols, selectedIds, indexOffset, onSelect, onContextMenu, onDownload, colTemplate,
 }: {
-  policies:     PolicyDocument[];
+  groups:       DrugGroup[];
   cols:         number;
   selectedIds:  Set<string>;
   indexOffset:  number;
   onSelect:     (id: string) => void;
   onContextMenu:(id: string, x: number, y: number) => void;
+  onDownload:   (group: DrugGroup) => void;
+  colTemplate:  Record<number, string>;
 }) {
   return (
     <div
       style={{
         display:             "grid",
-        gridTemplateColumns: COL_TEMPLATE[cols] ?? COL_TEMPLATE[3],
+        gridTemplateColumns: colTemplate[cols] ?? colTemplate[3],
         gap:                 "12px",
       }}
     >
-      {policies.map((policy, i) => (
+      {groups.map((group, i) => (
         <PolicyCard
-          key={policy.id}
-          policy={policy}
+          key={group.drug_generic}
+          group={group}
           index={indexOffset + i}
-          isSelected={selectedIds.has(policy.id)}
+          isSelected={selectedIds.has(group.drug_generic)}
           onSelect={onSelect}
           onContextMenu={onContextMenu}
+          onDownload={onDownload}
         />
       ))}
     </div>
@@ -263,7 +443,7 @@ function SectionLabel({ label, style }: { label: string; style?: React.CSSProper
   );
 }
 
-function EmptyState() {
+function EmptyState({ loading }: { loading: boolean }) {
   return (
     <div
       style={{
@@ -274,7 +454,9 @@ function EmptyState() {
         color:      "#9AA3BB",
       }}
     >
-      No policies match your filters.
+      {loading
+        ? "Loading policies…"
+        : "No policies yet. Ingest a policy document to get started."}
     </div>
   );
 }

@@ -102,6 +102,30 @@ export async function getMedicalPolicy(payerId: string, drugGeneric: string) {
   return data ?? null;
 }
 
+// ── Library queries ───────────────────────────────────────────────
+
+export async function getAllLibraryPolicies() {
+  const { data, error } = await supabase
+    .from('medical_benefit_policies')
+    .select('*')
+    .order('drug_name', { ascending: true })
+    .order('effective_date', { ascending: false });
+
+  if (error) throw new Error(`Failed to fetch library policies: ${error.message}`);
+  return (data ?? []) as MedicalBenefitPolicy[];
+}
+
+export async function getPoliciesByDrug(drugGeneric: string) {
+  const { data, error } = await supabase
+    .from('medical_benefit_policies')
+    .select('*')
+    .eq('drug_generic', drugGeneric.toLowerCase())
+    .order('payer_name', { ascending: true });
+
+  if (error) throw new Error(`Failed to fetch policies for drug: ${error.message}`);
+  return (data ?? []) as MedicalBenefitPolicy[];
+}
+
 export async function getPharmacyPolicy(payerId: string, drugGeneric: string) {
   const { data, error } = await supabase
     .from('pharmacy_benefit_policies')

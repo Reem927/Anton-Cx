@@ -122,7 +122,9 @@ async function callClaudeExtraction(
   const userText = [
     'Extract policy information from this clinical policy document.',
     drugHint ? `Drug to extract: ${drugHint}` : null,
-    payerHint ? `Payer: ${payerHint}` : null,
+    // Only provide a payer hint if we actually know it (not "Unknown")
+    payerHint && payerHint !== 'Unknown' ? `Payer hint: ${payerHint}` : 'Determine the payer name from the document content.',
+    'If the document covers MULTIPLE payers, set payer_name to all payer names separated by " | " (e.g. "Aetna | UnitedHealthcare | Cigna"). If only one payer, use their full name.',
     'Return ONLY the JSON object. No markdown, no explanation.',
   ].filter(Boolean).join('\n');
 
@@ -166,16 +168,16 @@ export async function extractFromPdf(
   source: IngestionSource = 'pdf_upload',
   sourceUrl?: string,
 ): Promise<IngestionResult> {
-  const imageContent: Anthropic.ImageBlockParam = {
-    type:   'image',
+  const documentContent: Anthropic.DocumentBlockParam = {
+    type:   'document',
     source: {
       type:       'base64',
-      media_type: 'application/pdf' as 'image/png',
+      media_type: 'application/pdf',
       data:       pdfBase64,
     },
   };
 
-  const raw = await callClaudeExtraction([imageContent], drugName, payerName);
+  const raw = await callClaudeExtraction([documentContent], drugName, payerName);
   return routeExtractionResult(raw, payerName, source, sourceUrl);
 }
 
@@ -194,23 +196,42 @@ export async function extractFromText(
 }
 
 /**
- * Route extraction result to medical or pharmacy table format
+ * Split a payer_name like "Aetna | UHC | Cigna" into individual names.
+ * Returns at least one entry (falls back to the original string).
+ */
+function splitPayers(payerName: string): string[] {
+  const parts = payerName.split('|').map(s => s.trim()).filter(Boolean);
+  return parts.length > 0 ? parts : [payerName];
+}
+
+/**
+ * Route extraction result to medical or pharmacy table format.
+ * When Claude returns multiple payers separated by " | ", this creates
+ * one policy record per payer so each appears as its own entry in the library.
  */
 function routeExtractionResult(
   raw: unknown,
-  payerName: string,
+  payerNameHint: string,
   source: IngestionSource,
   sourceUrl?: string,
 ): IngestionResult {
   const doc = raw as Record<string, unknown>;
   const policyType = doc.policy_type as string;
   const now = new Date().toISOString();
-  const payerId = slugifyPayer(payerName);
+
+  // Use Claude's extracted payer_name if available, fall back to hint
+  const extractedPayer = typeof doc.payer_name === 'string' && doc.payer_name.trim()
+    ? doc.payer_name.trim()
+    : payerNameHint;
+  const resolvedPayer = extractedPayer !== 'Unknown' ? extractedPayer : 'Unknown Payer';
+
+  // Split multi-payer names into individual payers
+  const payers = splitPayers(resolvedPayer);
 
   // Pharmacy-only document
   if (policyType === 'pharmacy_benefit') {
     const validated = validatePharmacyExtraction(raw);
-    const pharmacyPolicy: PharmacyBenefitPolicy = {
+    const pharmacyPolicies: PharmacyBenefitPolicy[] = payers.map(payer => ({
       ...validated,
       id:           uuidv4(),
       created_at:   now,
@@ -218,19 +239,23 @@ function routeExtractionResult(
       source_url:   sourceUrl ?? null,
       source_type:  source,
       extracted_at: now,
-      payer_id:     payerId,
-    };
+      payer_id:     slugifyPayer(payer),
+      payer_name:   payer,
+    }));
 
     return {
-      success:         true,
-      policy_type:     'pharmacy_benefit',
-      pharmacy_policy: pharmacyPolicy,
+      success:            true,
+      policy_type:        'pharmacy_benefit',
+      medical_policies:   [],
+      pharmacy_policies:  pharmacyPolicies,
+      pharmacy_policy:    pharmacyPolicies[0],
     };
   }
 
   // Medical benefit (or both)
   const validated = validateMedicalExtraction(raw);
-  const medicalPolicy: MedicalBenefitPolicy = {
+
+  const medicalPolicies: MedicalBenefitPolicy[] = payers.map(payer => ({
     ...validated,
     id:             uuidv4(),
     created_at:     now,
@@ -238,33 +263,35 @@ function routeExtractionResult(
     source_url:     sourceUrl ?? null,
     source_type:    source,
     extracted_at:   now,
-    payer_id:       payerId,
-    payer_name:     validated.payer_name || payerName,
+    payer_id:       slugifyPayer(payer),
+    payer_name:     payer,
     changed_fields: [],
-  };
+  }));
 
   const result: IngestionResult = {
-    success:        true,
-    policy_type:    validated.policy_type === 'both' ? 'both' : 'medical_benefit',
-    medical_policy: medicalPolicy,
+    success:           true,
+    policy_type:       validated.policy_type === 'both' ? 'both' : 'medical_benefit',
+    medical_policies:  medicalPolicies,
+    pharmacy_policies: [],
+    medical_policy:    medicalPolicies[0],
   };
 
-  // If policy_type is "both", also create a pharmacy flag entry
+  // If policy_type is "both", also create pharmacy entries per payer
   if (validated.policy_type === 'both') {
-    result.pharmacy_policy = {
+    result.pharmacy_policies = payers.map(payer => ({
       id:                    uuidv4(),
       created_at:            now,
       updated_at:            now,
       source_url:            sourceUrl ?? null,
       source_type:           source,
       extracted_at:          now,
-      policy_type:           'pharmacy_benefit',
+      policy_type:           'pharmacy_benefit' as const,
       drug_name:             validated.drug_name,
       drug_generic:          validated.drug_generic,
       j_code:                validated.j_code,
       ndc:                   null,
-      payer_name:            validated.payer_name || payerName,
-      payer_id:              payerId,
+      payer_name:            payer,
+      payer_id:              slugifyPayer(payer),
       plan_types:            validated.plan_types,
       drug_category:         validated.drug_category,
       formulary_tier:        validated.formulary_tier,
@@ -275,7 +302,8 @@ function routeExtractionResult(
       effective_date:        validated.effective_date,
       policy_version:        validated.policy_version,
       notes:                 'Detected from medical benefit document that also covers pharmacy benefit.',
-    };
+    }));
+    result.pharmacy_policy = result.pharmacy_policies[0];
   }
 
   return result;

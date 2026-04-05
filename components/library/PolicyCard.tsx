@@ -4,55 +4,71 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { PAYER_ABBR, PAYER_DISPLAY, formatDate } from "./utils";
-import type { PolicyDocument } from "@/lib/types";
+import type { DrugGroup } from "@/app/(app)/policy-lib/page";
 
 const STATUS_STRIPE: Record<string, string> = {
-  covered:     "#0F7A40",
-  pa_required: "#D4880A",
-  denied:      "#B02020",
-  not_covered: "#B02020",
+  covered:          "#0F7A40",
+  not_covered:      "#B02020",
+  no_policy_found:  "#6B7BA4",
+  pharmacy_only:    "#D4880A",
 };
 
 const STATUS_ICON_BG: Record<string, string> = {
-  covered:     "#EDFAF3",
-  pa_required: "#FFF4E0",
-  denied:      "#FEE8E8",
-  not_covered: "#FEE8E8",
+  covered:          "#EDFAF3",
+  not_covered:      "#FEE8E8",
+  no_policy_found:  "#F0F2FA",
+  pharmacy_only:    "#FFF4E0",
 };
 
 const STATUS_ICON_COLOR: Record<string, string> = {
-  covered:     "#0F7A40",
-  pa_required: "#D4880A",
-  denied:      "#B02020",
-  not_covered: "#B02020",
+  covered:          "#0F7A40",
+  not_covered:      "#B02020",
+  no_policy_found:  "#6B7BA4",
+  pharmacy_only:    "#D4880A",
 };
 
 const STATUS_LINE_ACCENT: Record<string, string> = {
-  covered:     "#B8EDD0",
-  pa_required: "#F5D898",
-  denied:      "#F5C0C0",
-  not_covered: "#F5C0C0",
+  covered:          "#B8EDD0",
+  not_covered:      "#F5C0C0",
+  no_policy_found:  "#D0D6E8",
+  pharmacy_only:    "#F5D898",
 };
 
 
 interface Props {
-  policy:      PolicyDocument;
+  group:       DrugGroup;
   index:       number;
   isSelected:  boolean;
   onSelect:    (id: string) => void;
   onContextMenu: (id: string, x: number, y: number) => void;
+  onDownload?: (group: DrugGroup) => void;
 }
 
-export function PolicyCard({ policy, index, isSelected, onSelect, onContextMenu }: Props) {
+export function PolicyCard({ group, index, isSelected, onSelect, onContextMenu, onDownload }: Props) {
   const [isHovered, setIsHovered] = useState(false);
 
-  const stripeColor  = STATUS_STRIPE[policy.coverage_status]  ?? "#9AA3BB";
-  const iconBg       = STATUS_ICON_BG[policy.coverage_status]    ?? "#F0F2FA";
-  const iconColor    = STATUS_ICON_COLOR[policy.coverage_status]  ?? "#6B7BA4";
-  const accentLine   = STATUS_LINE_ACCENT[policy.coverage_status] ?? "#E2E6F0";
-  const payerAbbr    = PAYER_ABBR[policy.payer_id]    ?? policy.payer_id.toUpperCase();
-  const payerDisplay = PAYER_DISPLAY[policy.payer_id] ?? policy.payer_id;
-  const hasChanged   = policy.changed_fields.length > 0;
+  // Use the "best" status for stripe color — covered > pharmacy_only > no_policy > not_covered
+  const primaryStatus = group.policies.some(p => p.coverage_status === "covered")
+    ? "covered"
+    : group.policies.some(p => p.coverage_status === "pharmacy_only")
+    ? "pharmacy_only"
+    : group.policies.some(p => p.coverage_status === "no_policy_found")
+    ? "no_policy_found"
+    : "not_covered";
+
+  const stripeColor  = STATUS_STRIPE[primaryStatus]  ?? "#9AA3BB";
+  const iconBg       = STATUS_ICON_BG[primaryStatus]    ?? "#F0F2FA";
+  const iconColor    = STATUS_ICON_COLOR[primaryStatus]  ?? "#6B7BA4";
+  const accentLine   = STATUS_LINE_ACCENT[primaryStatus] ?? "#E2E6F0";
+
+  const payerLabels = group.payer_ids.map(id =>
+    PAYER_DISPLAY[id] ?? id.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase())
+  );
+  const payerAbbrs = group.payer_ids.map(id =>
+    PAYER_ABBR[id] ?? id.slice(0, 3).toUpperCase()
+  );
+  const hasChanged = group.hasChanges;
+  const groupId = group.drug_generic.toLowerCase();
 
   const borderWidth = isSelected ? "1.5px" : "0.5px";
   const borderColor = isSelected ? "#2E6BE6" : isHovered ? "#C4D4F8" : "#E8EBF2";
@@ -117,24 +133,34 @@ export function PolicyCard({ policy, index, isSelected, onSelect, onContextMenu 
             position:     "absolute",
             bottom:       "8px",
             right:        "8px",
-            background:   "#FFFFFF",
-            borderWidth:  "0.5px",
-            borderStyle:  "solid",
-            borderColor:  "#E8EBF2",
-            borderRadius: "4px",
-            padding:      "2px 6px",
-            fontFamily:   "var(--font-dm-mono), 'DM Mono', monospace",
-            fontSize:     "10px",
-            fontWeight:   700,
-            color:        "#6B7BA4",
+            display:      "flex",
+            gap:          "3px",
           }}
         >
-          {payerAbbr}
+          {payerAbbrs.map(abbr => (
+            <span
+              key={abbr}
+              style={{
+                background:   "#FFFFFF",
+                borderWidth:  "0.5px",
+                borderStyle:  "solid",
+                borderColor:  "#E8EBF2",
+                borderRadius: "4px",
+                padding:      "2px 6px",
+                fontFamily:   "var(--font-dm-mono), 'DM Mono', monospace",
+                fontSize:     "10px",
+                fontWeight:   700,
+                color:        "#6B7BA4",
+              }}
+            >
+              {abbr}
+            </span>
+          ))}
         </div>
 
 
         <button
-          onClick={e => { e.stopPropagation(); onSelect(policy.id); }}
+          onClick={e => { e.stopPropagation(); onSelect(groupId); }}
           style={{
             position:     "absolute",
             top:          "8px",
@@ -171,7 +197,7 @@ export function PolicyCard({ policy, index, isSelected, onSelect, onContextMenu 
               gap:        "4px",
             }}
           >
-            <ActionBtn title="Download PDF" onClick={e => e.stopPropagation()}>
+            <ActionBtn title="Download PDF" onClick={e => { e.stopPropagation(); onDownload?.(group); }}>
               <DownloadIcon />
             </ActionBtn>
             <ActionBtn title="View diff" onClick={e => e.stopPropagation()}>
@@ -218,7 +244,7 @@ export function PolicyCard({ policy, index, isSelected, onSelect, onContextMenu 
               textOverflow:"ellipsis",
             }}
           >
-            {policy.drug_name} · {payerDisplay}
+            {group.drug_name}
           </div>
           <div
             style={{
@@ -231,7 +257,7 @@ export function PolicyCard({ policy, index, isSelected, onSelect, onContextMenu 
               marginTop:   "2px",
             }}
           >
-            {policy.j_code} · {formatDate(policy.effective_date)}
+            {group.j_code || "—"} · {payerLabels.join(" | ")}
           </div>
         </div>
 
@@ -249,11 +275,11 @@ export function PolicyCard({ policy, index, isSelected, onSelect, onContextMenu 
               }}
             />
           )}
-          <StatusPill status={policy.coverage_status} />
+          <StatusPill status={primaryStatus} />
           <button
             onClick={e => {
               e.stopPropagation();
-              onContextMenu(policy.id, e.clientX, e.clientY);
+              onContextMenu(groupId, e.clientX, e.clientY);
             }}
             style={{
               width:      "22px",

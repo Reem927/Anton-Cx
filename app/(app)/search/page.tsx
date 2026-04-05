@@ -33,7 +33,7 @@ export default function SearchPage() {
     } else if (filter === "Changed this qtr") {
       list = list.filter((p) => p.changed_fields.length > 0);
     } else if (filter === "Denied") {
-      list = list.filter((p) => p.coverage_status === "denied");
+      list = list.filter((p) => p.coverage_status === "not_covered");
     } else if (filter === "Open access") {
       list = list.filter((p) => p.coverage_status === "covered");
     } else if (filter === "Restricted") {
@@ -41,7 +41,7 @@ export default function SearchPage() {
     } else if (filter === "My policy only") {
       list = list.filter((p) => p.payer_id === "bcbs-tx");
     } else if (filter === "Outliers" || filter === "More restrictive") {
-      list = list.filter((p) => p.coverage_status === "denied");
+      list = list.filter((p) => p.coverage_status === "not_covered");
     } else if (filter === "More permissive") {
       list = list.filter((p) => p.coverage_status === "covered");
     } else if (filter === "Changed") {

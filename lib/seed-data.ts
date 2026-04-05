@@ -1,13 +1,15 @@
 import type { PolicyDocument } from "./types";
 
-// Static seed data for client-side rendering before DB is connected.
-// 20 records across 8 payers, 5 drug classes.
+// Static seed data for client-side rendering on pages that
+// haven't been connected to Supabase yet (search, compare, dashboard).
+// Policy Library uses Supabase directly — this is NOT shown there.
 export const SEED_POLICIES: PolicyDocument[] = [
   // Humira — aetna
   {
     id: "seed-001", payer_id: "aetna", drug_id: "adalimumab",
     drug_name: "Humira", drug_generic: "adalimumab", j_code: "J0135",
-    coverage_status: "pa_required", prior_auth_required: true,
+    coverage_status: "covered", formulary_tier: "preferred_specialty",
+    prior_auth_required: true,
     prior_auth_criteria: "Patient must have moderate to severe RA (DAS28 >3.2) and failed ≥1 DMARD for 3 months.",
     step_therapy: true, step_therapy_drugs: ["methotrexate", "sulfasalazine"],
     site_of_care: null, indications: ["RA", "PsA", "CD", "UC", "AS"],
@@ -21,7 +23,8 @@ export const SEED_POLICIES: PolicyDocument[] = [
   {
     id: "seed-002", payer_id: "uhc", drug_id: "adalimumab",
     drug_name: "Humira", drug_generic: "adalimumab", j_code: "J0135",
-    coverage_status: "pa_required", prior_auth_required: true,
+    coverage_status: "covered", formulary_tier: "preferred_specialty",
+    prior_auth_required: true,
     prior_auth_criteria: "Patient must have moderate to severe RA (DAS28 >3.2) and failed ≥1 DMARD for 3 months.",
     step_therapy: true, step_therapy_drugs: ["methotrexate", "sulfasalazine"],
     site_of_care: null, indications: ["RA", "PsA", "CD", "UC", "AS"],
@@ -35,7 +38,8 @@ export const SEED_POLICIES: PolicyDocument[] = [
   {
     id: "seed-003", payer_id: "cigna", drug_id: "adalimumab",
     drug_name: "Humira", drug_generic: "adalimumab", j_code: "J0135",
-    coverage_status: "pa_required", prior_auth_required: true,
+    coverage_status: "covered", formulary_tier: "non_preferred",
+    prior_auth_required: true,
     prior_auth_criteria: "Patient must have moderate to severe RA (DAS28 >3.2) and failed ≥1 DMARD for 3 months.",
     step_therapy: true, step_therapy_drugs: ["methotrexate", "sulfasalazine"],
     site_of_care: null, indications: ["RA", "PsA", "CD", "UC", "AS"],
@@ -49,7 +53,8 @@ export const SEED_POLICIES: PolicyDocument[] = [
   {
     id: "seed-004", payer_id: "bcbs-tx", drug_id: "adalimumab",
     drug_name: "Humira", drug_generic: "adalimumab", j_code: "J0135",
-    coverage_status: "covered", prior_auth_required: false,
+    coverage_status: "covered", formulary_tier: "preferred_specialty",
+    prior_auth_required: false,
     prior_auth_criteria: "",
     step_therapy: false, step_therapy_drugs: [],
     site_of_care: null, indications: ["RA", "PsA", "CD", "UC", "AS"],
@@ -63,7 +68,8 @@ export const SEED_POLICIES: PolicyDocument[] = [
   {
     id: "seed-005", payer_id: "aetna", drug_id: "pembrolizumab",
     drug_name: "Keytruda", drug_generic: "pembrolizumab", j_code: "J9271",
-    coverage_status: "pa_required", prior_auth_required: true,
+    coverage_status: "covered", formulary_tier: "preferred_specialty",
+    prior_auth_required: true,
     prior_auth_criteria: "Patient must have PD-L1 expression ≥1% (TPS) confirmed by FDA-approved test. ECOG PS 0–1.",
     step_therapy: false, step_therapy_drugs: [],
     site_of_care: "Outpatient infusion center or oncology clinic only",
@@ -77,7 +83,8 @@ export const SEED_POLICIES: PolicyDocument[] = [
   {
     id: "seed-006", payer_id: "uhc", drug_id: "pembrolizumab",
     drug_name: "Keytruda", drug_generic: "pembrolizumab", j_code: "J9271",
-    coverage_status: "covered", prior_auth_required: false,
+    coverage_status: "covered", formulary_tier: "preferred_specialty",
+    prior_auth_required: false,
     prior_auth_criteria: "",
     step_therapy: false, step_therapy_drugs: [],
     site_of_care: "Outpatient infusion center or oncology clinic only",
@@ -91,7 +98,8 @@ export const SEED_POLICIES: PolicyDocument[] = [
   {
     id: "seed-007", payer_id: "cigna", drug_id: "pembrolizumab",
     drug_name: "Keytruda", drug_generic: "pembrolizumab", j_code: "J9271",
-    coverage_status: "pa_required", prior_auth_required: true,
+    coverage_status: "covered", formulary_tier: "non_specialty",
+    prior_auth_required: true,
     prior_auth_criteria: "Patient must have PD-L1 expression ≥1% (TPS) confirmed by FDA-approved test.",
     step_therapy: false, step_therapy_drugs: [],
     site_of_care: "Outpatient infusion center or oncology clinic only",
@@ -101,11 +109,12 @@ export const SEED_POLICIES: PolicyDocument[] = [
     source_pdf_url: null, extracted_at: "2026-04-01T00:00:00Z",
     changed_fields: [],
   },
-  // Keytruda — bcbs-tx (denied)
+  // Keytruda — bcbs-tx
   {
     id: "seed-008", payer_id: "bcbs-tx", drug_id: "pembrolizumab",
     drug_name: "Keytruda", drug_generic: "pembrolizumab", j_code: "J9271",
-    coverage_status: "pa_required", prior_auth_required: true,
+    coverage_status: "covered", formulary_tier: "non_preferred",
+    prior_auth_required: true,
     prior_auth_criteria: "Patient must have PD-L1 expression ≥1% (TPS). For first-line, PD-L1 ≥50%.",
     step_therapy: false, step_therapy_drugs: [],
     site_of_care: "Outpatient infusion center or oncology clinic only",
@@ -119,7 +128,8 @@ export const SEED_POLICIES: PolicyDocument[] = [
   {
     id: "seed-009", payer_id: "aetna", drug_id: "dupilumab",
     drug_name: "Dupixent", drug_generic: "dupilumab", j_code: "J0173",
-    coverage_status: "pa_required", prior_auth_required: true,
+    coverage_status: "covered", formulary_tier: "preferred_specialty",
+    prior_auth_required: true,
     prior_auth_criteria: "Moderate-to-severe atopic dermatitis (IGA ≥3 or EASI ≥16) with inadequate response to topical corticosteroids for ≥4 weeks.",
     step_therapy: true, step_therapy_drugs: ["topical corticosteroids", "cyclosporine"],
     site_of_care: null, indications: ["AD", "Asthma", "CRSwNP", "EoE"],
@@ -132,7 +142,8 @@ export const SEED_POLICIES: PolicyDocument[] = [
   {
     id: "seed-010", payer_id: "uhc", drug_id: "dupilumab",
     drug_name: "Dupixent", drug_generic: "dupilumab", j_code: "J0173",
-    coverage_status: "pa_required", prior_auth_required: true,
+    coverage_status: "covered", formulary_tier: "non_specialty",
+    prior_auth_required: true,
     prior_auth_criteria: "Moderate-to-severe atopic dermatitis (IGA ≥3 or EASI ≥16) with inadequate response to topical corticosteroids for ≥4 weeks.",
     step_therapy: true, step_therapy_drugs: ["topical corticosteroids", "cyclosporine"],
     site_of_care: null, indications: ["AD", "Asthma", "CRSwNP", "EoE"],
@@ -141,11 +152,12 @@ export const SEED_POLICIES: PolicyDocument[] = [
     source_pdf_url: null, extracted_at: "2026-04-01T00:00:00Z",
     changed_fields: [],
   },
-  // Dupixent — cigna (denied)
+  // Dupixent — cigna (not covered)
   {
     id: "seed-011", payer_id: "cigna", drug_id: "dupilumab",
     drug_name: "Dupixent", drug_generic: "dupilumab", j_code: "J0173",
-    coverage_status: "denied", prior_auth_required: false,
+    coverage_status: "not_covered", formulary_tier: "not_covered",
+    prior_auth_required: false,
     prior_auth_criteria: "",
     step_therapy: false, step_therapy_drugs: [],
     site_of_care: null, indications: ["AD"],
@@ -158,7 +170,8 @@ export const SEED_POLICIES: PolicyDocument[] = [
   {
     id: "seed-012", payer_id: "bcbs-tx", drug_id: "dupilumab",
     drug_name: "Dupixent", drug_generic: "dupilumab", j_code: "J0173",
-    coverage_status: "pa_required", prior_auth_required: true,
+    coverage_status: "covered", formulary_tier: "non_preferred",
+    prior_auth_required: true,
     prior_auth_criteria: "Moderate-to-severe atopic dermatitis with inadequate topical response.",
     step_therapy: true, step_therapy_drugs: ["topical corticosteroids"],
     site_of_care: null, indications: ["AD", "Asthma", "CRSwNP"],
@@ -167,11 +180,12 @@ export const SEED_POLICIES: PolicyDocument[] = [
     source_pdf_url: null, extracted_at: "2026-04-01T00:00:00Z",
     changed_fields: [],
   },
-  // Stelara — aetna (denied)
+  // Stelara — aetna
   {
     id: "seed-013", payer_id: "aetna", drug_id: "ustekinumab",
     drug_name: "Stelara", drug_generic: "ustekinumab", j_code: "J3357",
-    coverage_status: "pa_required", prior_auth_required: true,
+    coverage_status: "covered", formulary_tier: "preferred_specialty",
+    prior_auth_required: true,
     prior_auth_criteria: "For CD/UC: failed or intolerant to conventional therapy and ≥1 anti-TNF agent.",
     step_therapy: true, step_therapy_drugs: ["methotrexate", "TNF inhibitor"],
     site_of_care: null, indications: ["PsO", "PsA", "CD", "UC"],
@@ -184,7 +198,8 @@ export const SEED_POLICIES: PolicyDocument[] = [
   {
     id: "seed-014", payer_id: "uhc", drug_id: "ustekinumab",
     drug_name: "Stelara", drug_generic: "ustekinumab", j_code: "J3357",
-    coverage_status: "pa_required", prior_auth_required: true,
+    coverage_status: "covered", formulary_tier: "non_specialty",
+    prior_auth_required: true,
     prior_auth_criteria: "For CD/UC: failed or intolerant to conventional therapy and ≥1 anti-TNF agent.",
     step_therapy: true, step_therapy_drugs: ["methotrexate", "TNF inhibitor"],
     site_of_care: null, indications: ["PsO", "PsA", "CD", "UC"],
@@ -193,11 +208,12 @@ export const SEED_POLICIES: PolicyDocument[] = [
     source_pdf_url: null, extracted_at: "2026-04-01T00:00:00Z",
     changed_fields: [],
   },
-  // Stelara — cigna (denied)
+  // Stelara — cigna (not covered)
   {
     id: "seed-015", payer_id: "cigna", drug_id: "ustekinumab",
     drug_name: "Stelara", drug_generic: "ustekinumab", j_code: "J3357",
-    coverage_status: "denied", prior_auth_required: false,
+    coverage_status: "not_covered", formulary_tier: "not_covered",
+    prior_auth_required: false,
     prior_auth_criteria: "",
     step_therapy: false, step_therapy_drugs: [],
     site_of_care: null, indications: [],
@@ -210,7 +226,8 @@ export const SEED_POLICIES: PolicyDocument[] = [
   {
     id: "seed-016", payer_id: "bcbs-tx", drug_id: "ustekinumab",
     drug_name: "Stelara", drug_generic: "ustekinumab", j_code: "J3357",
-    coverage_status: "pa_required", prior_auth_required: true,
+    coverage_status: "covered", formulary_tier: "preferred_specialty",
+    prior_auth_required: true,
     prior_auth_criteria: "For CD/UC: failed or intolerant to conventional therapy and ≥1 anti-TNF agent.",
     step_therapy: true, step_therapy_drugs: ["methotrexate", "TNF inhibitor"],
     site_of_care: null, indications: ["PsO", "PsA", "CD", "UC"],
@@ -223,7 +240,8 @@ export const SEED_POLICIES: PolicyDocument[] = [
   {
     id: "seed-017", payer_id: "aetna", drug_id: "etanercept",
     drug_name: "Enbrel", drug_generic: "etanercept", j_code: "J1438",
-    coverage_status: "pa_required", prior_auth_required: true,
+    coverage_status: "covered", formulary_tier: "non_preferred",
+    prior_auth_required: true,
     prior_auth_criteria: "Active moderate-to-severe RA (≥6 tender and ≥6 swollen joints) and inadequate response to methotrexate at therapeutic doses for ≥3 months.",
     step_therapy: true, step_therapy_drugs: ["methotrexate", "hydroxychloroquine"],
     site_of_care: null, indications: ["RA", "PsA", "PsO", "AS", "JIA"],
@@ -232,11 +250,12 @@ export const SEED_POLICIES: PolicyDocument[] = [
     source_pdf_url: null, extracted_at: "2026-04-01T00:00:00Z",
     changed_fields: [],
   },
-  // Enbrel — uhc (covered)
+  // Enbrel — uhc
   {
     id: "seed-018", payer_id: "uhc", drug_id: "etanercept",
     drug_name: "Enbrel", drug_generic: "etanercept", j_code: "J1438",
-    coverage_status: "covered", prior_auth_required: false,
+    coverage_status: "covered", formulary_tier: "preferred_specialty",
+    prior_auth_required: false,
     prior_auth_criteria: "",
     step_therapy: false, step_therapy_drugs: [],
     site_of_care: null, indications: ["RA", "PsA", "PsO", "AS", "JIA"],
@@ -249,7 +268,8 @@ export const SEED_POLICIES: PolicyDocument[] = [
   {
     id: "seed-019", payer_id: "cigna", drug_id: "etanercept",
     drug_name: "Enbrel", drug_generic: "etanercept", j_code: "J1438",
-    coverage_status: "pa_required", prior_auth_required: true,
+    coverage_status: "covered", formulary_tier: "non_specialty",
+    prior_auth_required: true,
     prior_auth_criteria: "Active moderate-to-severe RA and inadequate response to methotrexate.",
     step_therapy: true, step_therapy_drugs: ["methotrexate"],
     site_of_care: null, indications: ["RA", "PsA", "PsO", "AS"],
@@ -262,7 +282,8 @@ export const SEED_POLICIES: PolicyDocument[] = [
   {
     id: "seed-020", payer_id: "bcbs-tx", drug_id: "etanercept",
     drug_name: "Enbrel", drug_generic: "etanercept", j_code: "J1438",
-    coverage_status: "pa_required", prior_auth_required: true,
+    coverage_status: "covered", formulary_tier: "non_preferred",
+    prior_auth_required: true,
     prior_auth_criteria: "Active moderate-to-severe RA and inadequate response to methotrexate at therapeutic doses.",
     step_therapy: true, step_therapy_drugs: ["methotrexate", "hydroxychloroquine"],
     site_of_care: null, indications: ["RA", "PsA", "PsO", "AS", "JIA"],

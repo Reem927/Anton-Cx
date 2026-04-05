@@ -15,7 +15,7 @@ export function DiffSummaryBar({ policies, payers, drug }: DiffSummaryBarProps) 
 
   const changedCount = drugPolicies.filter((p) => p.changed_fields.length > 0).length;
   const paCount      = drugPolicies.filter((p) => p.prior_auth_required).length;
-  const deniedCount  = drugPolicies.filter((p) => p.coverage_status === "denied").length;
+  const deniedCount  = drugPolicies.filter((p) => p.coverage_status === "not_covered").length;
   const coveredCount = drugPolicies.filter((p) => p.coverage_status === "covered").length;
 
   if (drugPolicies.length === 0) return null;

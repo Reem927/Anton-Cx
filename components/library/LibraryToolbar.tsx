@@ -1,39 +1,42 @@
 "use client";
 
-import type { CoverageStatus } from "@/lib/types";
-
 export type SortOption = "recent" | "drug" | "payer" | "changed";
 export type ViewMode   = "card" | "list";
 
 interface Props {
   search:        string;
   payerFilter:   string;
-  statusFilter:  string;
+  coverageFilter:string;
+  tierFilter:    string;
   sort:          SortOption;
   view:          ViewMode;
   cols:          number;
   resultCount:   number;
-  allPayers:     string[];
+  allPayers:     { id: string; label: string }[];
   onSearch:      (v: string) => void;
   onPayer:       (v: string) => void;
-  onStatus:      (v: string) => void;
+  onCoverage:    (v: string) => void;
+  onTier:        (v: string) => void;
   onSort:        (v: SortOption) => void;
   onView:        (v: ViewMode) => void;
   onCols:        (v: number) => void;
 }
 
-const PAYER_LABELS: Record<string, string> = {
-  aetna:    "Aetna",
-  uhc:      "UnitedHealthcare",
-  cigna:    "Cigna",
-  "bcbs-tx":"BCBS Texas",
-};
+const COVERAGE_OPTIONS = [
+  { value: "",                 label: "All Coverage" },
+  { value: "covered",          label: "Covered" },
+  { value: "not_covered",      label: "Not Covered" },
+  { value: "no_policy_found",  label: "No Policy Found" },
+  { value: "pharmacy_only",    label: "Pharmacy Only" },
+];
 
-const STATUS_OPTIONS: { value: CoverageStatus | ""; label: string }[] = [
-  { value: "",            label: "All Statuses" },
-  { value: "covered",     label: "Covered" },
-  { value: "pa_required", label: "PA Required" },
-  { value: "denied",      label: "Denied" },
+const TIER_OPTIONS = [
+  { value: "",                    label: "All Tiers" },
+  { value: "preferred_specialty", label: "Preferred Specialty" },
+  { value: "non_specialty",       label: "Non-Specialty" },
+  { value: "non_preferred",       label: "Non-Preferred" },
+  { value: "not_covered",         label: "Not Covered" },
+  { value: "none",                label: "No Tier Assigned" },
 ];
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
@@ -58,8 +61,8 @@ const selectStyle: React.CSSProperties = {
 };
 
 export function LibraryToolbar({
-  search, payerFilter, statusFilter, sort, view, cols, resultCount,
-  allPayers, onSearch, onPayer, onStatus, onSort, onView, onCols,
+  search, payerFilter, coverageFilter, tierFilter, sort, view, cols, resultCount,
+  allPayers, onSearch, onPayer, onCoverage, onTier, onSort, onView, onCols,
 }: Props) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
@@ -80,27 +83,34 @@ export function LibraryToolbar({
           fontSize:     "12px",
           color:        "#1B3A6B",
           outline:      "none",
-          maxWidth:     "260px",
-          width:        "260px",
+          maxWidth:     "240px",
+          width:        "240px",
         }}
       />
 
-
+      {/* Payer — built from actual data */}
       <select value={payerFilter} onChange={e => onPayer(e.target.value)} style={selectStyle}>
         <option value="">All Payers</option>
         {allPayers.map(p => (
-          <option key={p} value={p}>{PAYER_LABELS[p] ?? p}</option>
+          <option key={p.id} value={p.id}>{p.label}</option>
         ))}
       </select>
 
-
-      <select value={statusFilter} onChange={e => onStatus(e.target.value)} style={selectStyle}>
-        {STATUS_OPTIONS.map(o => (
+      {/* Coverage status */}
+      <select value={coverageFilter} onChange={e => onCoverage(e.target.value)} style={selectStyle}>
+        {COVERAGE_OPTIONS.map(o => (
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
       </select>
 
+      {/* Formulary tier */}
+      <select value={tierFilter} onChange={e => onTier(e.target.value)} style={selectStyle}>
+        {TIER_OPTIONS.map(o => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+      </select>
 
+      {/* Sort */}
       <select value={sort} onChange={e => onSort(e.target.value as SortOption)} style={selectStyle}>
         {SORT_OPTIONS.map(o => (
           <option key={o.value} value={o.value}>{o.label}</option>

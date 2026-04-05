@@ -1,20 +1,19 @@
 "use client";
 
-import { StatusPill } from "@/components/ui/StatusPill";
+import { StatusPill, TierPill } from "@/components/ui/StatusPill";
 import { PAYER_DISPLAY, formatDate } from "./utils";
-import type { PolicyDocument } from "@/lib/types";
+import type { DrugGroup } from "@/app/(app)/policy-lib/page";
 
-const GRID_COLS = "2fr 1.1fr 0.85fr 0.8fr 1fr 0.7fr 56px";
-const HEADER_COLS = ["DRUG", "PAYER", "J-CODE", "STATUS", "INDICATIONS", "EFFECTIVE", ""];
+const GRID_COLS = "2fr 1.5fr 0.8fr 1fr 1fr 0.8fr 56px";
+const HEADER_COLS = ["DRUG", "PAYERS", "CODE", "COVERAGE", "FORMULARY TIER", "EFFECTIVE", ""];
 
 interface Props {
-  policies:    PolicyDocument[];
-  selectedIds: Set<string>;
-  onSelect:    (id: string) => void;
-  onContextMenu: (id: string, x: number, y: number) => void;
+  groups:       DrugGroup[];
+  onContextMenu:(id: string, x: number, y: number) => void;
+  onDownload?:  (group: DrugGroup) => void;
 }
 
-export function PolicyListTable({ policies, selectedIds, onSelect, onContextMenu }: Props) {
+export function PolicyListTable({ groups, onContextMenu, onDownload }: Props) {
   return (
     <div
       style={{
@@ -54,27 +53,37 @@ export function PolicyListTable({ policies, selectedIds, onSelect, onContextMenu
       </div>
 
 
-      {policies.map((policy, i) => (
-        <ListRow
-          key={policy.id}
-          policy={policy}
-          isLast={i === policies.length - 1}
+      {groups.map((group, i) => (
+        <GroupRow
+          key={group.drug_generic}
+          group={group}
+          isLast={i === groups.length - 1}
           onContextMenu={onContextMenu}
+          onDownload={onDownload}
         />
       ))}
     </div>
   );
 }
 
-function ListRow({
-  policy, isLast, onContextMenu,
+function GroupRow({
+  group, isLast, onContextMenu, onDownload,
 }: {
-  policy: PolicyDocument;
+  group: DrugGroup;
   isLast: boolean;
   onContextMenu: (id: string, x: number, y: number) => void;
+  onDownload?: (group: DrugGroup) => void;
 }) {
-  const hasChanged   = policy.changed_fields.length > 0;
-  const payerDisplay = PAYER_DISPLAY[policy.payer_id] ?? policy.payer_id;
+  const hasChanged = group.hasChanges;
+  const groupId = group.drug_generic.toLowerCase();
+
+  const payerLabels = group.payer_ids.map(id =>
+    PAYER_DISPLAY[id] ?? id.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase())
+  );
+
+  // Collect unique statuses and tiers
+  const statuses = [...new Set(group.policies.map(p => p.coverage_status))];
+  const tiers = [...new Set(group.policies.map(p => p.formulary_tier))];
 
   return (
     <div
@@ -90,17 +99,28 @@ function ListRow({
       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#F7F8FC"; }}
       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
     >
-
+      {/* Drug */}
       <div>
-        <div
-          style={{
-            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-            fontSize:   "13px",
-            fontWeight: 600,
-            color:      "#1B3A6B",
-          }}
-        >
-          {policy.drug_name}
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <span
+            style={{
+              fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+              fontSize:   "13px",
+              fontWeight: 600,
+              color:      "#1B3A6B",
+            }}
+          >
+            {group.drug_name}
+          </span>
+          {hasChanged && (
+            <div
+              title="Changed this quarter"
+              style={{
+                width: 5, height: 5, borderRadius: "50%",
+                background: "#2E6BE6", flexShrink: 0,
+              }}
+            />
+          )}
         </div>
         <div
           style={{
@@ -110,23 +130,24 @@ function ListRow({
             marginTop:  "1px",
           }}
         >
-          {policy.drug_generic}
+          {group.drug_generic}
         </div>
       </div>
 
-      {/* Payer */}
+      {/* Payers */}
       <div
         style={{
           fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
           fontSize:   "12px",
           fontWeight: 500,
-          color:      "#2E6BE6",
+          color:      "#1B3A6B",
+          lineHeight: "1.4",
         }}
       >
-        {payerDisplay}
+        {payerLabels.join(" | ")}
       </div>
 
-      {/* J-Code */}
+      {/* Code */}
       <div>
         <span
           style={{
@@ -138,30 +159,25 @@ function ListRow({
             padding:      "2px 6px",
           }}
         >
-          {policy.j_code}
+          {group.j_code || "—"}
         </span>
       </div>
 
-      {/* Status */}
-      <div>
-        <StatusPill status={policy.coverage_status} />
+      {/* Coverage — show all unique statuses */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "3px" }}>
+        {statuses.map(s => (
+          <StatusPill key={s} status={s} />
+        ))}
       </div>
 
-      {/* Indications */}
-      <div
-        style={{
-          fontFamily:   "var(--font-dm-sans), 'DM Sans', sans-serif",
-          fontSize:     "12px",
-          color:        "#4A5578",
-          overflow:     "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace:   "nowrap",
-        }}
-      >
-        {policy.indications.join(" · ") || "—"}
+      {/* Formulary Tier — show all unique tiers */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "3px" }}>
+        {tiers.map((t, i) => (
+          <TierPill key={t ?? `null-${i}`} tier={t} />
+        ))}
       </div>
 
-      {/* Effective date */}
+      {/* Effective */}
       <div
         style={{
           fontFamily: "var(--font-dm-mono), 'DM Mono', monospace",
@@ -169,39 +185,44 @@ function ListRow({
           color:      "#9AA3BB",
         }}
       >
-        {formatDate(policy.effective_date, true)}
+        {formatDate(group.effective_date, true)}
       </div>
 
       {/* Actions */}
-      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-        {hasChanged && (
-          <div
-            title="Changed this quarter"
-            style={{
-              width:        "5px",
-              height:       "5px",
-              borderRadius: "50%",
-              background:   "#2E6BE6",
-              flexShrink:   0,
-            }}
-          />
-        )}
+      <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
         <button
-          onClick={e => { e.stopPropagation(); onContextMenu(policy.id, e.clientX, e.clientY); }}
+          onClick={e => { e.stopPropagation(); onDownload?.(group); }}
+          title="Download PDF"
           style={{
-            fontFamily:   "var(--font-dm-sans), 'DM Sans', sans-serif",
-            fontSize:     "11px",
-            color:        "#2E6BE6",
-            borderWidth:  "0.5px",
-            borderStyle:  "solid",
-            borderColor:  "#C4D4F8",
-            background:   "#EBF0FC",
-            borderRadius: "5px",
-            padding:      "3px 8px",
-            cursor:       "pointer",
+            width: 24, height: 24, borderRadius: "50%",
+            border: "none", background: "transparent",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", color: "#9AA3BB",
           }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "#2E6BE6"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "#9AA3BB"; }}
         >
-          View
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M6 2v6M3.5 6l2.5 2 2.5-2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M1.5 10h9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+          </svg>
+        </button>
+        <button
+          onClick={e => { e.stopPropagation(); onContextMenu(groupId, e.clientX, e.clientY); }}
+          style={{
+            width: 24, height: 24, borderRadius: "50%",
+            border: "none", background: "transparent",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", color: "#9AA3BB",
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "#1B3A6B"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "#9AA3BB"; }}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="7" cy="3.5" r="1" fill="currentColor" />
+            <circle cx="7" cy="7"   r="1" fill="currentColor" />
+            <circle cx="7" cy="10.5" r="1" fill="currentColor" />
+          </svg>
         </button>
       </div>
     </div>
