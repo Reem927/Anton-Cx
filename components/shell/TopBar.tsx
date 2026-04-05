@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PersonaSwitcher } from "./PersonaSwitcher";
+import { UserMenu } from "./UserMenu";
 import type { Persona } from "@/lib/types";
 
 interface TopBarProps {
@@ -142,6 +143,7 @@ export function TopBar({
 
         {/* Persona switcher */}
         <PersonaSwitcher current={persona} onChange={onPersonaChange} />
+        <UserMenu />
       </div>
     </header>
   );
