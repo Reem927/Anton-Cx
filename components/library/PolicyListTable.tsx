@@ -11,9 +11,10 @@ interface Props {
   groups:       DrugGroup[];
   onContextMenu:(id: string, x: number, y: number) => void;
   onDownload?:  (group: DrugGroup) => void;
+  onOpen?:      (group: DrugGroup) => void;
 }
 
-export function PolicyListTable({ groups, onContextMenu, onDownload }: Props) {
+export function PolicyListTable({ groups, onContextMenu, onDownload, onOpen }: Props) {
   return (
     <div
       style={{
@@ -39,7 +40,7 @@ export function PolicyListTable({ groups, onContextMenu, onDownload }: Props) {
           <span
             key={col}
             style={{
-              fontFamily:    "var(--font-dm-mono), 'DM Mono', monospace",
+              fontFamily:    "var(--font-dm-mono), Lato, sans-serif",
               fontSize:      "10px",
               fontWeight:    600,
               color:         "#9AA3BB",
@@ -60,6 +61,7 @@ export function PolicyListTable({ groups, onContextMenu, onDownload }: Props) {
           isLast={i === groups.length - 1}
           onContextMenu={onContextMenu}
           onDownload={onDownload}
+          onOpen={onOpen}
         />
       ))}
     </div>
@@ -67,12 +69,13 @@ export function PolicyListTable({ groups, onContextMenu, onDownload }: Props) {
 }
 
 function GroupRow({
-  group, isLast, onContextMenu, onDownload,
+  group, isLast, onContextMenu, onDownload, onOpen,
 }: {
   group: DrugGroup;
   isLast: boolean;
   onContextMenu: (id: string, x: number, y: number) => void;
   onDownload?: (group: DrugGroup) => void;
+  onOpen?: (group: DrugGroup) => void;
 }) {
   const hasChanged = group.hasChanges;
   const groupId = group.drug_generic.toLowerCase();
@@ -96,6 +99,7 @@ function GroupRow({
         cursor:              "pointer",
         transition:          "background 80ms",
       }}
+      onClick={() => onOpen?.(group)}
       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#F7F8FC"; }}
       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
     >
@@ -104,7 +108,7 @@ function GroupRow({
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <span
             style={{
-              fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+              fontFamily: "var(--font-dm-sans), Lato, sans-serif",
               fontSize:   "13px",
               fontWeight: 600,
               color:      "#1B3A6B",
@@ -124,7 +128,7 @@ function GroupRow({
         </div>
         <div
           style={{
-            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+            fontFamily: "var(--font-dm-sans), Lato, sans-serif",
             fontSize:   "11px",
             color:      "#9AA3BB",
             marginTop:  "1px",
@@ -137,7 +141,7 @@ function GroupRow({
       {/* Payers */}
       <div
         style={{
-          fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+          fontFamily: "var(--font-dm-sans), Lato, sans-serif",
           fontSize:   "12px",
           fontWeight: 500,
           color:      "#1B3A6B",
@@ -151,7 +155,7 @@ function GroupRow({
       <div>
         <span
           style={{
-            fontFamily:   "var(--font-dm-mono), 'DM Mono', monospace",
+            fontFamily:   "var(--font-dm-mono), Lato, sans-serif",
             fontSize:     "11px",
             color:        "#6B7BA4",
             background:   "#F0F2FA",
@@ -180,7 +184,7 @@ function GroupRow({
       {/* Effective */}
       <div
         style={{
-          fontFamily: "var(--font-dm-mono), 'DM Mono', monospace",
+          fontFamily: "var(--font-dm-mono), Lato, sans-serif",
           fontSize:   "11px",
           color:      "#9AA3BB",
         }}

@@ -78,7 +78,7 @@ export function MetricCards({ persona, data }: MetricCardsProps) {
         >
           <div
             style={{
-              fontFamily:    "var(--font-dm-mono), 'DM Mono', monospace",
+              fontFamily:    "var(--font-dm-mono), Lato, sans-serif",
               fontSize:      "9px",
               fontWeight:    500,
               letterSpacing: "0.08em",
@@ -90,7 +90,7 @@ export function MetricCards({ persona, data }: MetricCardsProps) {
           </div>
           <div
             style={{
-              fontFamily: "var(--font-syne), Syne, sans-serif",
+              fontFamily: "var(--font-syne), Lato, sans-serif",
               fontSize:   "28px",
               fontWeight: 800,
               color:      "#0D1C3A",

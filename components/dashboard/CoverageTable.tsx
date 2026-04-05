@@ -52,7 +52,7 @@ export function CoverageTable({ policies, loading = false }: CoverageTableProps)
               className="text-left"
               style={{
                 padding:       "10px 16px",
-                fontFamily:    "var(--font-dm-mono), 'DM Mono', monospace",
+                fontFamily:    "var(--font-dm-mono), Lato, sans-serif",
                 fontSize:      "9px",
                 fontWeight:    500,
                 letterSpacing: "0.08em",
@@ -68,7 +68,7 @@ export function CoverageTable({ policies, loading = false }: CoverageTableProps)
                 className="text-left"
                 style={{
                   padding:       "10px 16px",
-                  fontFamily:    "var(--font-dm-mono), 'DM Mono', monospace",
+                  fontFamily:    "var(--font-dm-mono), Lato, sans-serif",
                   fontSize:      "9px",
                   fontWeight:    500,
                   letterSpacing: "0.08em",
@@ -106,7 +106,7 @@ export function CoverageTable({ policies, loading = false }: CoverageTableProps)
                 <td
                   style={{
                     padding:    "10px 16px",
-                    fontFamily: "var(--font-syne), Syne, sans-serif",
+                    fontFamily: "var(--font-syne), Lato, sans-serif",
                     fontSize:   "13px",
                     fontWeight: 700,
                     color:      "#0D1C3A",
@@ -116,7 +116,7 @@ export function CoverageTable({ policies, loading = false }: CoverageTableProps)
                   {policy && (
                     <div
                       style={{
-                        fontFamily:    "var(--font-dm-mono), 'DM Mono', monospace",
+                        fontFamily:    "var(--font-dm-mono), Lato, sans-serif",
                         fontSize:      "9px",
                         color:         "#A0AABB",
                         letterSpacing: "0.05em",
@@ -137,7 +137,7 @@ export function CoverageTable({ policies, loading = false }: CoverageTableProps)
                           {p.changed_fields.length > 0 && (
                             <span
                               style={{
-                                fontFamily:    "var(--font-dm-mono), 'DM Mono', monospace",
+                                fontFamily:    "var(--font-dm-mono), Lato, sans-serif",
                                 fontSize:      "8px",
                                 color:         "#D4880A",
                                 letterSpacing: "0.05em",

@@ -13,6 +13,7 @@ interface PasteURLProps {
 
 export function PasteURL({ onStageChange }: PasteURLProps) {
   const [url, setUrl] = useState("");
+  const [drugName, setDrugName] = useState("");
   const [stage, setStage] = useState<IngestionStage>("idle");
   const [error, setError] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -47,6 +48,7 @@ export function PasteURL({ onStageChange }: PasteURLProps) {
         body: JSON.stringify({
           source: "url_paste",
           url: url.trim(),
+          drug_name: drugName.trim() || undefined,
         }),
       });
 
@@ -68,11 +70,66 @@ export function PasteURL({ onStageChange }: PasteURLProps) {
 
   return (
     <div ref={containerRef}>
+      {/* Drug name hint */}
+      <div className="url-field mb-4">
+        <label
+          style={{
+            fontFamily: "var(--font-dm-sans), Lato, sans-serif",
+            fontSize: "12px",
+            fontWeight: 500,
+            color: "#6A7590",
+            display: "block",
+            marginBottom: 6,
+          }}
+        >
+          Drug Name <span style={{ color: "#A0AABB", fontWeight: 400 }}>(optional — helps focus extraction)</span>
+        </label>
+        <div
+          className="flex items-center gap-3 rounded-lg px-4"
+          style={{
+            background: "#FFFFFF",
+            borderWidth: "0.5px",
+            borderStyle: "solid",
+            borderColor: "#E8EBF2",
+            height: 44,
+            transition: "border-color 0.1s",
+          }}
+          onFocusCapture={(e) => (e.currentTarget.style.borderColor = "#C4D4F8")}
+          onBlurCapture={(e) => (e.currentTarget.style.borderColor = "#E8EBF2")}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
+            <rect x="4" y="1" width="8" height="14" rx="4" stroke="#A0AABB" strokeWidth="1.25" />
+            <path d="M4 8h8" stroke="#A0AABB" strokeWidth="1.25" />
+          </svg>
+          <input
+            type="text"
+            value={drugName}
+            onChange={(e) => setDrugName(e.target.value)}
+            placeholder="e.g. Keytruda, Humira, Dupixent"
+            className="flex-1 bg-transparent outline-none"
+            style={{
+              fontFamily: "var(--font-dm-sans), Lato, sans-serif",
+              fontSize: "14px",
+              color: "#0D1C3A",
+            }}
+          />
+          {drugName && (
+            <button
+              type="button"
+              onClick={() => setDrugName("")}
+              style={{ color: "#A0AABB", cursor: "pointer", fontSize: 18, lineHeight: 1 }}
+            >
+              x
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* URL input */}
       <div className="url-field mb-4">
         <label
           style={{
-            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+            fontFamily: "var(--font-dm-sans), Lato, sans-serif",
             fontSize: "12px",
             fontWeight: 500,
             color: "#6A7590",
@@ -103,7 +160,7 @@ export function PasteURL({ onStageChange }: PasteURLProps) {
             placeholder="e.g. https://www.uhcprovider.com/content/dam/provider/docs/public/policies/medadv-guidelines/k/keytruda.pdf"
             className="flex-1 bg-transparent outline-none"
             style={{
-              fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+              fontFamily: "var(--font-dm-sans), Lato, sans-serif",
               fontSize: "14px",
               color: "#0D1C3A",
             }}
@@ -120,7 +177,7 @@ export function PasteURL({ onStageChange }: PasteURLProps) {
         </div>
         <p
           style={{
-            fontFamily: "var(--font-dm-mono), 'DM Mono', monospace",
+            fontFamily: "var(--font-dm-mono), Lato, sans-serif",
             fontSize: "11px",
             color: "#A0AABB",
             margin: "6px 0 0",
@@ -139,7 +196,7 @@ export function PasteURL({ onStageChange }: PasteURLProps) {
           disabled={!canSubmit}
           className="rounded-lg px-6 py-[10px]"
           style={{
-            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+            fontFamily: "var(--font-dm-sans), Lato, sans-serif",
             fontSize: "14px",
             fontWeight: 500,
             background: canSubmit ? "#2E6BE6" : "#C4D4F8",

@@ -33,7 +33,7 @@ export function CompareToolbar({
       <div className="flex items-center gap-2">
         <span
           style={{
-            fontFamily:    "var(--font-dm-mono), 'DM Mono', monospace",
+            fontFamily:    "var(--font-dm-mono), Lato, sans-serif",
             fontSize:      "9px",
             color:         "#A0AABB",
             letterSpacing: "0.08em",
@@ -46,7 +46,7 @@ export function CompareToolbar({
           onChange={(e) => onDrugChange(e.target.value)}
           className="rounded px-3 py-[5px]"
           style={{
-            fontFamily:  "var(--font-dm-sans), 'DM Sans', sans-serif",
+            fontFamily:  "var(--font-dm-sans), Lato, sans-serif",
             fontSize:    "13px",
             color:       "#0D1C3A",
             background:  "#FFFFFF",
@@ -67,7 +67,7 @@ export function CompareToolbar({
       <div className="flex items-center gap-2 flex-wrap">
         <span
           style={{
-            fontFamily:    "var(--font-dm-mono), 'DM Mono', monospace",
+            fontFamily:    "var(--font-dm-mono), Lato, sans-serif",
             fontSize:      "9px",
             color:         "#A0AABB",
             letterSpacing: "0.08em",
@@ -87,7 +87,7 @@ export function CompareToolbar({
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="rounded px-2 py-[3px] transition-colors"
               style={{
-                fontFamily:    "var(--font-dm-mono), 'DM Mono', monospace",
+                fontFamily:    "var(--font-dm-mono), Lato, sans-serif",
                 fontSize:      "9px",
                 fontWeight:    500,
                 letterSpacing: "0.06em",
@@ -113,7 +113,7 @@ export function CompareToolbar({
         onClick={onDiffsOnlyToggle}
         className="flex items-center gap-2 rounded px-3 py-[5px] transition-colors"
         style={{
-          fontFamily:    "var(--font-dm-mono), 'DM Mono', monospace",
+          fontFamily:    "var(--font-dm-mono), Lato, sans-serif",
           fontSize:      "10px",
           fontWeight:    500,
           letterSpacing: "0.06em",

@@ -42,9 +42,10 @@ interface Props {
   onSelect:    (id: string) => void;
   onContextMenu: (id: string, x: number, y: number) => void;
   onDownload?: (group: DrugGroup) => void;
+  onOpen?: (group: DrugGroup) => void;
 }
 
-export function PolicyCard({ group, index, isSelected, onSelect, onContextMenu, onDownload }: Props) {
+export function PolicyCard({ group, index, isSelected, onSelect, onContextMenu, onDownload, onOpen }: Props) {
   const [isHovered, setIsHovered] = useState(false);
 
   // Use the "best" status for stripe color — covered > pharmacy_only > no_policy > not_covered
@@ -83,6 +84,7 @@ export function PolicyCard({ group, index, isSelected, onSelect, onContextMenu, 
         damping:   30,
         delay:     Math.min(index * 0.04, 0.2),
       }}
+      onClick={() => onOpen?.(group)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{
@@ -147,7 +149,7 @@ export function PolicyCard({ group, index, isSelected, onSelect, onContextMenu, 
                 borderColor:  "#E8EBF2",
                 borderRadius: "4px",
                 padding:      "2px 6px",
-                fontFamily:   "var(--font-dm-mono), 'DM Mono', monospace",
+                fontFamily:   "var(--font-dm-mono), Lato, sans-serif",
                 fontSize:     "10px",
                 fontWeight:   700,
                 color:        "#6B7BA4",
@@ -200,9 +202,6 @@ export function PolicyCard({ group, index, isSelected, onSelect, onContextMenu, 
             <ActionBtn title="Download PDF" onClick={e => { e.stopPropagation(); onDownload?.(group); }}>
               <DownloadIcon />
             </ActionBtn>
-            <ActionBtn title="View diff" onClick={e => e.stopPropagation()}>
-              <DiffIcon />
-            </ActionBtn>
           </div>
         )}
       </div>
@@ -235,7 +234,7 @@ export function PolicyCard({ group, index, isSelected, onSelect, onContextMenu, 
         <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
           <div
             style={{
-              fontFamily:  "var(--font-dm-sans), 'DM Sans', sans-serif",
+              fontFamily:  "var(--font-dm-sans), Lato, sans-serif",
               fontSize:    "12px",
               fontWeight:  600,
               color:       "#1B3A6B",
@@ -248,7 +247,7 @@ export function PolicyCard({ group, index, isSelected, onSelect, onContextMenu, 
           </div>
           <div
             style={{
-              fontFamily:  "var(--font-dm-mono), 'DM Mono', monospace",
+              fontFamily:  "var(--font-dm-mono), Lato, sans-serif",
               fontSize:    "10px",
               color:       "#9AA3BB",
               whiteSpace:  "nowrap",
@@ -353,14 +352,6 @@ function DownloadIcon() {
     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
       <path d="M6 2v6M3.5 6l2.5 2 2.5-2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M1.5 10h9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function DiffIcon() {
-  return (
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-      <path d="M1.5 3h9M1.5 6h6M1.5 9h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
     </svg>
   );
 }

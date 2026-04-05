@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { LibraryToolbar, type SortOption, type ViewMode } from "@/components/library/LibraryToolbar";
 import { PolicyCard }        from "@/components/library/PolicyCard";
@@ -118,6 +119,7 @@ async function downloadPolicyPdf(drugGeneric: string, drugName: string) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function PolicyLibraryPage() {
+  const router = useRouter();
   const [policies,       setPolicies]       = useState<PolicyDocument[]>([]);
   const [loading,        setLoading]        = useState(true);
   const [view,           setView]           = useState<ViewMode>("card");
@@ -226,10 +228,7 @@ export default function PolicyLibraryPage() {
         await triggerDownload(group);
         break;
       case "open":
-        // Future: navigate to policy detail page
-        break;
-      case "diff":
-        // Future: open diff viewer
+        router.push(`/policy-lib/${encodeURIComponent(group.drug_generic.toLowerCase())}`);
         break;
       case "compare":
         // Future: add to comparison set
@@ -239,7 +238,11 @@ export default function PolicyLibraryPage() {
         setPolicies(prev => prev.filter(p => p.drug_generic.toLowerCase() !== group.drug_generic.toLowerCase()));
         break;
     }
-  }, [contextMenu, groups, triggerDownload]);
+  }, [contextMenu, groups, triggerDownload, router]);
+
+  const openPolicy = useCallback((group: DrugGroup) => {
+    router.push(`/policy-lib/${encodeURIComponent(group.drug_generic.toLowerCase())}`);
+  }, [router]);
 
   const COL_TEMPLATE: Record<number, string> = {
     2: "repeat(2, 1fr)",
@@ -254,7 +257,7 @@ export default function PolicyLibraryPage() {
       <div style={{ marginBottom: "20px" }}>
         <h1
           style={{
-            fontFamily: "var(--font-syne), Syne, sans-serif",
+            fontFamily: "var(--font-syne), Lato, sans-serif",
             fontSize:   "22px",
             fontWeight: 800,
             color:      "#1B3A6B",
@@ -265,7 +268,7 @@ export default function PolicyLibraryPage() {
         </h1>
         <p
           style={{
-            fontFamily: "var(--font-dm-mono), 'DM Mono', monospace",
+            fontFamily: "var(--font-dm-mono), Lato, sans-serif",
             fontSize:   "11px",
             color:      "#9AA3BB",
             margin:     0,
@@ -287,7 +290,7 @@ export default function PolicyLibraryPage() {
             borderRadius: "8px",
             padding:      "10px 16px",
             marginBottom: "16px",
-            fontFamily:   "var(--font-dm-sans), 'DM Sans', sans-serif",
+            fontFamily:   "var(--font-dm-sans), Lato, sans-serif",
             fontSize:     "13px",
             color:        "#1B3A6B",
             display:      "flex",
@@ -343,14 +346,14 @@ export default function PolicyLibraryPage() {
             ) : showSections ? (
               <>
                 <SectionLabel label="Recently changed" />
-                <DrugGroupGrid groups={changedGroups} cols={cols} selectedIds={selectedIds} indexOffset={0} onSelect={toggleSelect} onContextMenu={openContextMenu} onDownload={triggerDownload} colTemplate={COL_TEMPLATE} />
+                <DrugGroupGrid groups={changedGroups} cols={cols} selectedIds={selectedIds} indexOffset={0} onSelect={toggleSelect} onContextMenu={openContextMenu} onDownload={triggerDownload} onOpen={openPolicy} colTemplate={COL_TEMPLATE} />
                 <SectionLabel label="All policies" style={{ marginTop: "24px" }} />
-                <DrugGroupGrid groups={unchangedGroups} cols={cols} selectedIds={selectedIds} indexOffset={changedGroups.length} onSelect={toggleSelect} onContextMenu={openContextMenu} onDownload={triggerDownload} colTemplate={COL_TEMPLATE} />
+                <DrugGroupGrid groups={unchangedGroups} cols={cols} selectedIds={selectedIds} indexOffset={changedGroups.length} onSelect={toggleSelect} onContextMenu={openContextMenu} onDownload={triggerDownload} onOpen={openPolicy} colTemplate={COL_TEMPLATE} />
               </>
             ) : (
               <>
                 <SectionLabel label="All policies" />
-                <DrugGroupGrid groups={groups} cols={cols} selectedIds={selectedIds} indexOffset={0} onSelect={toggleSelect} onContextMenu={openContextMenu} onDownload={triggerDownload} colTemplate={COL_TEMPLATE} />
+                <DrugGroupGrid groups={groups} cols={cols} selectedIds={selectedIds} indexOffset={0} onSelect={toggleSelect} onContextMenu={openContextMenu} onDownload={triggerDownload} onOpen={openPolicy} colTemplate={COL_TEMPLATE} />
               </>
             )}
           </motion.div>
@@ -369,6 +372,7 @@ export default function PolicyLibraryPage() {
                 groups={groups}
                 onContextMenu={openContextMenu}
                 onDownload={triggerDownload}
+                onOpen={openPolicy}
               />
             )}
           </motion.div>
@@ -391,7 +395,7 @@ export default function PolicyLibraryPage() {
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function DrugGroupGrid({
-  groups, cols, selectedIds, indexOffset, onSelect, onContextMenu, onDownload, colTemplate,
+  groups, cols, selectedIds, indexOffset, onSelect, onContextMenu, onDownload, onOpen, colTemplate,
 }: {
   groups:       DrugGroup[];
   cols:         number;
@@ -400,6 +404,7 @@ function DrugGroupGrid({
   onSelect:     (id: string) => void;
   onContextMenu:(id: string, x: number, y: number) => void;
   onDownload:   (group: DrugGroup) => void;
+  onOpen:       (group: DrugGroup) => void;
   colTemplate:  Record<number, string>;
 }) {
   return (
@@ -419,6 +424,7 @@ function DrugGroupGrid({
           onSelect={onSelect}
           onContextMenu={onContextMenu}
           onDownload={onDownload}
+          onOpen={onOpen}
         />
       ))}
     </div>
@@ -429,7 +435,7 @@ function SectionLabel({ label, style }: { label: string; style?: React.CSSProper
   return (
     <div
       style={{
-        fontFamily:    "var(--font-dm-mono), 'DM Mono', monospace",
+        fontFamily:    "var(--font-dm-mono), Lato, sans-serif",
         fontSize:      "11px",
         color:         "#9AA3BB",
         letterSpacing: "0.06em",
@@ -449,7 +455,7 @@ function EmptyState({ loading }: { loading: boolean }) {
       style={{
         textAlign:  "center",
         padding:    "60px 0",
-        fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+        fontFamily: "var(--font-dm-sans), Lato, sans-serif",
         fontSize:   "13px",
         color:      "#9AA3BB",
       }}

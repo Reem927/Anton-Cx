@@ -12,7 +12,6 @@ interface Props {
 const MENU_ITEMS: ({ id: string; label: string; danger?: boolean } | null)[] = [
   { id: "download", label: "Download PDF" },
   { id: "open",     label: "Open policy" },
-  { id: "diff",     label: "View diff" },
   { id: "compare",  label: "Add to compare" },
   null,
   { id: "remove",   label: "Remove", danger: true },
@@ -88,7 +87,7 @@ function MenuButton({
         border:      "none",
         background:  "transparent",
         cursor:      "pointer",
-        fontFamily:  "var(--font-dm-sans), 'DM Sans', sans-serif",
+        fontFamily:  "var(--font-dm-sans), Lato, sans-serif",
         fontSize:    "12px",
         color:       danger ? "#B02020" : "#1B3A6B",
         textAlign:   "left",

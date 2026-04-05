@@ -99,7 +99,8 @@ export function FetchByDrug({ onStageChange }: FetchByDrugProps) {
           }
 
           const data = await res.json();
-          const count = (data.medical_policy ? 1 : 0) + (data.pharmacy_policy ? 1 : 0);
+          const count = (data.medical_policies?.length ?? (data.medical_policy ? 1 : 0))
+                      + (data.pharmacy_policies?.length ?? (data.pharmacy_policy ? 1 : 0));
           totalAdded += count;
           setAddedCount(totalAdded);
         } catch (err) {
@@ -133,7 +134,7 @@ export function FetchByDrug({ onStageChange }: FetchByDrugProps) {
       <div className="fetch-field mb-4">
         <label
           style={{
-            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+            fontFamily: "var(--font-dm-sans), Lato, sans-serif",
             fontSize: "12px",
             fontWeight: 500,
             color: "#6A7590",
@@ -164,7 +165,7 @@ export function FetchByDrug({ onStageChange }: FetchByDrugProps) {
             placeholder="e.g. Keytruda, Pembrolizumab, or J9271"
             className="flex-1 bg-transparent outline-none"
             style={{
-              fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+              fontFamily: "var(--font-dm-sans), Lato, sans-serif",
               fontSize: "14px",
               color: "#0D1C3A",
             }}
@@ -186,7 +187,7 @@ export function FetchByDrug({ onStageChange }: FetchByDrugProps) {
         <div className="flex items-center justify-between mb-[6px]">
           <label
             style={{
-              fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+              fontFamily: "var(--font-dm-sans), Lato, sans-serif",
               fontSize: "12px",
               fontWeight: 500,
               color: "#6A7590",
@@ -199,7 +200,7 @@ export function FetchByDrug({ onStageChange }: FetchByDrugProps) {
               type="button"
               onClick={selectAll}
               style={{
-                fontFamily: "var(--font-dm-mono), 'DM Mono', monospace",
+                fontFamily: "var(--font-dm-mono), Lato, sans-serif",
                 fontSize: "10px",
                 color: "#2E6BE6",
                 background: "none",
@@ -243,7 +244,7 @@ export function FetchByDrug({ onStageChange }: FetchByDrugProps) {
             }
             className="flex-1 bg-transparent outline-none"
             style={{
-              fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+              fontFamily: "var(--font-dm-sans), Lato, sans-serif",
               fontSize: "14px",
               color: "#0D1C3A",
             }}
@@ -251,7 +252,7 @@ export function FetchByDrug({ onStageChange }: FetchByDrugProps) {
           {selectedPayers.length > 0 && (
             <span
               style={{
-                fontFamily: "var(--font-dm-mono), 'DM Mono', monospace",
+                fontFamily: "var(--font-dm-mono), Lato, sans-serif",
                 fontSize: "10px",
                 color: "#1B3A6B",
                 background: "#EBF0FC",
@@ -293,7 +294,7 @@ export function FetchByDrug({ onStageChange }: FetchByDrugProps) {
                   onClick={() => addPayer(payer)}
                   className="w-full text-left px-4 py-[10px]"
                   style={{
-                    fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                    fontFamily: "var(--font-dm-sans), Lato, sans-serif",
                     fontSize: "13px",
                     color: "#0D1C3A",
                     background: "transparent",
@@ -339,7 +340,7 @@ export function FetchByDrug({ onStageChange }: FetchByDrugProps) {
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
                   className="inline-flex items-center gap-[5px] rounded px-[8px] py-[4px]"
                   style={{
-                    fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                    fontFamily: "var(--font-dm-sans), Lato, sans-serif",
                     fontSize: "12px",
                     fontWeight: 500,
                     color: "#1B3A6B",
@@ -374,7 +375,7 @@ export function FetchByDrug({ onStageChange }: FetchByDrugProps) {
                   onClick={() => setSelectedPayers([])}
                   className="inline-flex items-center rounded px-[8px] py-[4px]"
                   style={{
-                    fontFamily: "var(--font-dm-mono), 'DM Mono', monospace",
+                    fontFamily: "var(--font-dm-mono), Lato, sans-serif",
                     fontSize: "10px",
                     color: "#6A7590",
                     background: "transparent",
@@ -400,7 +401,7 @@ export function FetchByDrug({ onStageChange }: FetchByDrugProps) {
           disabled={!canSubmit}
           className="rounded-lg px-6 py-[10px]"
           style={{
-            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+            fontFamily: "var(--font-dm-sans), Lato, sans-serif",
             fontSize: "14px",
             fontWeight: 500,
             background: canSubmit ? "#2E6BE6" : "#C4D4F8",
@@ -419,7 +420,7 @@ export function FetchByDrug({ onStageChange }: FetchByDrugProps) {
             animate={{ opacity: 1, x: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             style={{
-              fontFamily: "var(--font-dm-mono), 'DM Mono', monospace",
+              fontFamily: "var(--font-dm-mono), Lato, sans-serif",
               fontSize: "11px",
               color: "#0F7A40",
               background: "#EDFAF3",
@@ -437,7 +438,7 @@ export function FetchByDrug({ onStageChange }: FetchByDrugProps) {
         {selectedPayers.length > 0 && stage === "idle" && (
           <span
             style={{
-              fontFamily: "var(--font-dm-mono), 'DM Mono', monospace",
+              fontFamily: "var(--font-dm-mono), Lato, sans-serif",
               fontSize: "10px",
               color: "#6A7590",
               letterSpacing: "0.04em",

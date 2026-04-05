@@ -36,7 +36,7 @@ export function PolicyResultCard({ policy, index }: PolicyResultCardProps) {
           <div className="flex items-center gap-2 mb-1">
             <span
               style={{
-                fontFamily: "var(--font-syne), Syne, sans-serif",
+                fontFamily: "var(--font-syne), Lato, sans-serif",
                 fontSize:   "15px",
                 fontWeight: 700,
                 color:      "#0D1C3A",
@@ -46,7 +46,7 @@ export function PolicyResultCard({ policy, index }: PolicyResultCardProps) {
             </span>
             <span
               style={{
-                fontFamily:    "var(--font-dm-mono), 'DM Mono', monospace",
+                fontFamily:    "var(--font-dm-mono), Lato, sans-serif",
                 fontSize:      "10px",
                 color:         "#A0AABB",
                 letterSpacing: "0.05em",
@@ -57,7 +57,7 @@ export function PolicyResultCard({ policy, index }: PolicyResultCardProps) {
             {policy.changed_fields.length > 0 && (
               <span
                 style={{
-                  fontFamily:    "var(--font-dm-mono), 'DM Mono', monospace",
+                  fontFamily:    "var(--font-dm-mono), Lato, sans-serif",
                   fontSize:      "8px",
                   color:         "#D4880A",
                   background:    "#FFF4E0",
@@ -78,7 +78,7 @@ export function PolicyResultCard({ policy, index }: PolicyResultCardProps) {
           <div className="flex items-center gap-2 mb-3">
             <span
               style={{
-                fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                fontFamily: "var(--font-dm-sans), Lato, sans-serif",
                 fontSize:   "12px",
                 color:      "#6A7590",
               }}
@@ -88,7 +88,7 @@ export function PolicyResultCard({ policy, index }: PolicyResultCardProps) {
             <span style={{ color: "#D0D6E8" }}>·</span>
             <span
               style={{
-                fontFamily:    "var(--font-dm-mono), 'DM Mono', monospace",
+                fontFamily:    "var(--font-dm-mono), Lato, sans-serif",
                 fontSize:      "10px",
                 color:         "#6A7590",
                 letterSpacing: "0.05em",
@@ -106,7 +106,7 @@ export function PolicyResultCard({ policy, index }: PolicyResultCardProps) {
                 <span
                   key={ind}
                   style={{
-                    fontFamily:    "var(--font-dm-mono), 'DM Mono', monospace",
+                    fontFamily:    "var(--font-dm-mono), Lato, sans-serif",
                     fontSize:      "9px",
                     color:         "#6A7590",
                     background:    "#F7F8FC",
@@ -124,7 +124,7 @@ export function PolicyResultCard({ policy, index }: PolicyResultCardProps) {
               {policy.indications.length > 5 && (
                 <span
                   style={{
-                    fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                    fontFamily: "var(--font-dm-sans), Lato, sans-serif",
                     fontSize:   "11px",
                     color:      "#A0AABB",
                   }}
@@ -141,7 +141,7 @@ export function PolicyResultCard({ policy, index }: PolicyResultCardProps) {
           <StatusPill status={policy.coverage_status} />
           <div
             style={{
-              fontFamily:    "var(--font-dm-mono), 'DM Mono', monospace",
+              fontFamily:    "var(--font-dm-mono), Lato, sans-serif",
               fontSize:      "9px",
               color:         "#A0AABB",
               letterSpacing: "0.04em",
@@ -152,7 +152,7 @@ export function PolicyResultCard({ policy, index }: PolicyResultCardProps) {
           {policy.prior_auth_required && (
             <div
               style={{
-                fontFamily:    "var(--font-dm-mono), 'DM Mono', monospace",
+                fontFamily:    "var(--font-dm-mono), Lato, sans-serif",
                 fontSize:      "9px",
                 color:         "#D4880A",
                 letterSpacing: "0.04em",

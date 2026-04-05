@@ -13,6 +13,7 @@ interface UploadPDFProps {
 
 export function UploadPDF({ onStageChange }: UploadPDFProps) {
   const [file, setFile] = useState<File | null>(null);
+  const [drugName, setDrugName] = useState("");
   const [stage, setStage] = useState<IngestionStage>("idle");
   const [error, setError] = useState("");
   const [dragging, setDragging] = useState(false);
@@ -65,6 +66,7 @@ export function UploadPDF({ onStageChange }: UploadPDFProps) {
         body: JSON.stringify({
           source: "pdf_upload",
           pdf_base64: base64,
+          drug_name: drugName.trim() || undefined,
         }),
       });
 
@@ -86,6 +88,61 @@ export function UploadPDF({ onStageChange }: UploadPDFProps) {
 
   return (
     <div ref={containerRef}>
+      {/* Drug name hint */}
+      <div className="upload-field mb-4">
+        <label
+          style={{
+            fontFamily: "var(--font-dm-sans), Lato, sans-serif",
+            fontSize: "12px",
+            fontWeight: 500,
+            color: "#6A7590",
+            display: "block",
+            marginBottom: 6,
+          }}
+        >
+          Drug Name <span style={{ color: "#A0AABB", fontWeight: 400 }}>(optional — helps focus extraction)</span>
+        </label>
+        <div
+          className="flex items-center gap-3 rounded-lg px-4"
+          style={{
+            background: "#FFFFFF",
+            borderWidth: "0.5px",
+            borderStyle: "solid",
+            borderColor: "#E8EBF2",
+            height: 44,
+            transition: "border-color 0.1s",
+          }}
+          onFocusCapture={(e) => (e.currentTarget.style.borderColor = "#C4D4F8")}
+          onBlurCapture={(e) => (e.currentTarget.style.borderColor = "#E8EBF2")}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
+            <rect x="4" y="1" width="8" height="14" rx="4" stroke="#A0AABB" strokeWidth="1.25" />
+            <path d="M4 8h8" stroke="#A0AABB" strokeWidth="1.25" />
+          </svg>
+          <input
+            type="text"
+            value={drugName}
+            onChange={(e) => setDrugName(e.target.value)}
+            placeholder="e.g. Keytruda, Humira, Dupixent"
+            className="flex-1 bg-transparent outline-none"
+            style={{
+              fontFamily: "var(--font-dm-sans), Lato, sans-serif",
+              fontSize: "14px",
+              color: "#0D1C3A",
+            }}
+          />
+          {drugName && (
+            <button
+              type="button"
+              onClick={() => setDrugName("")}
+              style={{ color: "#A0AABB", cursor: "pointer", fontSize: 18, lineHeight: 1 }}
+            >
+              x
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Drop zone */}
       <div
         className="upload-field rounded-lg mb-5"
@@ -133,7 +190,7 @@ export function UploadPDF({ onStageChange }: UploadPDFProps) {
               <PdfBadge />
               <span
                 style={{
-                  fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                  fontFamily: "var(--font-dm-sans), Lato, sans-serif",
                   fontSize: "14px",
                   fontWeight: 500,
                   color: "#0D1C3A",
@@ -152,7 +209,7 @@ export function UploadPDF({ onStageChange }: UploadPDFProps) {
             <>
               <p
                 style={{
-                  fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                  fontFamily: "var(--font-dm-sans), Lato, sans-serif",
                   fontSize: "14px",
                   fontWeight: 500,
                   color: "#0D1C3A",
@@ -164,7 +221,7 @@ export function UploadPDF({ onStageChange }: UploadPDFProps) {
               </p>
               <p
                 style={{
-                  fontFamily: "var(--font-dm-mono), 'DM Mono', monospace",
+                  fontFamily: "var(--font-dm-mono), Lato, sans-serif",
                   fontSize: "11px",
                   color: "#A0AABB",
                   margin: 0,
@@ -186,7 +243,7 @@ export function UploadPDF({ onStageChange }: UploadPDFProps) {
           disabled={!canSubmit}
           className="rounded-lg px-6 py-[10px]"
           style={{
-            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+            fontFamily: "var(--font-dm-sans), Lato, sans-serif",
             fontSize: "14px",
             fontWeight: 500,
             background: canSubmit ? "#2E6BE6" : "#C4D4F8",
@@ -238,7 +295,7 @@ function PdfBadge() {
   return (
     <span
       style={{
-        fontFamily: "var(--font-dm-mono), 'DM Mono', monospace",
+        fontFamily: "var(--font-dm-mono), Lato, sans-serif",
         fontSize: "9px",
         fontWeight: 500,
         color: "#B02020",

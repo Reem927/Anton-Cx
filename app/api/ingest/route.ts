@@ -161,9 +161,20 @@ export async function POST(request: NextRequest) {
           }
 
           const contentType = urlResponse.headers.get('content-type') ?? '';
+          const urlLower = body.url.toLowerCase();
 
-          if (contentType.includes('application/pdf')) {
-            const buffer = await urlResponse.arrayBuffer();
+          // Detect PDF by content-type, URL extension, or file magic bytes
+          const buffer = await urlResponse.arrayBuffer();
+          const bytes = new Uint8Array(buffer.slice(0, 5));
+          const isPdfMagic = bytes[0] === 0x25 && bytes[1] === 0x50 &&
+                             bytes[2] === 0x44 && bytes[3] === 0x46; // %PDF
+
+          const isPdf = contentType.includes('application/pdf') ||
+                        contentType.includes('application/octet-stream') && urlLower.endsWith('.pdf') ||
+                        urlLower.endsWith('.pdf') ||
+                        isPdfMagic;
+
+          if (isPdf) {
             const base64 = Buffer.from(buffer).toString('base64');
             result = await extractFromPdf(
               base64,
@@ -173,8 +184,9 @@ export async function POST(request: NextRequest) {
               body.url,
             );
           } else {
-            // Strip HTML to get clean text for Claude
-            const rawText = await urlResponse.text();
+            // Decode as text and strip HTML for Claude
+            const decoder = new TextDecoder();
+            const rawText = decoder.decode(buffer);
             const cleanText = stripHtml(rawText);
 
             if (cleanText.length < 100) {
