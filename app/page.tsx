@@ -254,7 +254,7 @@ export default function LandingPage() {
             <div style={{ padding: "9px 16px", borderTop: "0.5px solid #E8EBF2", background: "#F7F8FC", display: "flex", alignItems: "center" }}>
               <span style={{ fontFamily: "var(--font-dm-mono),'DM Mono',monospace", fontSize: "9px", color: "#A0AABB", letterSpacing: "0.05em" }}>48 PAYERS · 5 DRUG CLASSES · UPDATED APR 4, 2026</span>
               <div style={{ flex: 1 }} />
-              <span style={{ fontFamily: "var(--font-dm-mono),'DM Mono',monospace", fontSize: "9px", color: "#2E6BE6", letterSpacing: "0.05em", cursor: "pointer" }}>OPEN IN COMPARE →</span>
+              <Link href="/compare" style={{ fontFamily: "var(--font-dm-mono),'DM Mono',monospace", fontSize: "9px", color: "#2E6BE6", letterSpacing: "0.05em", textDecoration: "none" }}>OPEN IN COMPARE →</Link>
             </div>
           </Card>
         </motion.div>
@@ -322,7 +322,9 @@ export default function LandingPage() {
                 <h3 style={{ fontFamily: "var(--font-dm-sans),'DM Sans',sans-serif", fontSize: "22px", fontWeight: 600, color: "#0D1C3A", letterSpacing: "-0.3px", marginBottom: 12 }}>{feat.title}</h3>
                 <p style={{ fontFamily: "var(--font-dm-sans),'DM Sans',sans-serif", fontSize: "15px", color: "#6A7590", lineHeight: 1.75, maxWidth: "600px" }}>{feat.desc}</p>
                 <div style={{ marginTop: 28, paddingTop: 20, borderTop: "0.5px solid #E8EBF2", display: "flex", alignItems: "center", gap: 16 }}>
-                  <Link href="/signup" style={{ fontFamily: "var(--font-dm-sans),'DM Sans',sans-serif", fontSize: "14px", fontWeight: 600, color: "#FFFFFF", textDecoration: "none", padding: "10px 20px", borderRadius: "6px", background: "#2E6BE6" }}>Try it free</Link>
+                  <Link href={feat.id === "compare" ? "/compare" : "/signup"} style={{ fontFamily: "var(--font-dm-sans),'DM Sans',sans-serif", fontSize: "14px", fontWeight: 600, color: "#FFFFFF", textDecoration: "none", padding: "10px 20px", borderRadius: "6px", background: "#2E6BE6" }}>
+                    {feat.id === "compare" ? "Open comparison" : "Try it free"}
+                  </Link>
                   <span style={{ fontFamily: "var(--font-dm-mono),'DM Mono',monospace", fontSize: "10px", color: "#A0AABB", letterSpacing: "0.05em" }}>No credit card required</span>
                 </div>
               </Card>

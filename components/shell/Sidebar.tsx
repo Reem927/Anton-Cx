@@ -29,7 +29,7 @@ const CORE_NAV: NavItem[] = [
   },
   {
     href:  "/compare",
-    label: "Comparison drug",
+    label: "Comparison Engine",
     icon:  <CompareIcon />,
   },
   {
