@@ -237,9 +237,13 @@ export interface IngestionRequest {
 }
 
 export interface IngestionResult {
-  success:          boolean;
-  policy_type:      PolicyType;
-  medical_policy?:  MedicalBenefitPolicy;
-  pharmacy_policy?: PharmacyBenefitPolicy;
-  error?:           string;
+  success:            boolean;
+  policy_type:        PolicyType;
+  medical_policies:   MedicalBenefitPolicy[];
+  pharmacy_policies:  PharmacyBenefitPolicy[];
+  /** @deprecated Use medical_policies[0] — kept for single-policy compat */
+  medical_policy?:    MedicalBenefitPolicy;
+  /** @deprecated Use pharmacy_policies[0] — kept for single-policy compat */
+  pharmacy_policy?:   PharmacyBenefitPolicy;
+  error?:             string;
 }

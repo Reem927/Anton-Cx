@@ -4,7 +4,6 @@ import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
-import { DEMO_PAYERS, PLAN_TYPES } from "./constants";
 import type { IngestionStage } from "./IngestionProgress";
 import { IngestionProgress } from "./IngestionProgress";
 
@@ -14,8 +13,6 @@ interface PasteURLProps {
 
 export function PasteURL({ onStageChange }: PasteURLProps) {
   const [url, setUrl] = useState("");
-  const [payer, setPayer] = useState("");
-  const [planType, setPlanType] = useState("");
   const [stage, setStage] = useState<IngestionStage>("idle");
   const [error, setError] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -35,7 +32,7 @@ export function PasteURL({ onStageChange }: PasteURLProps) {
   };
 
   const handleFetch = async () => {
-    if (!url.trim() || !payer) return;
+    if (!url.trim()) return;
 
     setError("");
     updateStage("fetching");
@@ -50,8 +47,6 @@ export function PasteURL({ onStageChange }: PasteURLProps) {
         body: JSON.stringify({
           source: "url_paste",
           url: url.trim(),
-          payer_name: payer,
-          plan_type: planType || undefined,
         }),
       });
 
@@ -69,7 +64,7 @@ export function PasteURL({ onStageChange }: PasteURLProps) {
     }
   };
 
-  const canSubmit = url.trim() && payer && (stage === "idle" || stage === "success" || stage === "error");
+  const canSubmit = url.trim() && (stage === "idle" || stage === "success" || stage === "error");
 
   return (
     <div ref={containerRef}>
@@ -85,7 +80,7 @@ export function PasteURL({ onStageChange }: PasteURLProps) {
             marginBottom: 6,
           }}
         >
-          Paste URL Link (any format - PDF, site, etc.)
+          Paste URL Link (any format — PDF, site, etc.)
         </label>
         <div
           className="flex items-center gap-3 rounded-lg px-4"
@@ -123,94 +118,16 @@ export function PasteURL({ onStageChange }: PasteURLProps) {
             </button>
           )}
         </div>
-      </div>
-
-      {/* Payer select */}
-      <div className="url-field mb-4">
-        <label
+        <p
           style={{
-            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-            fontSize: "12px",
-            fontWeight: 500,
-            color: "#6A7590",
-            display: "block",
-            marginBottom: 6,
+            fontFamily: "var(--font-dm-mono), 'DM Mono', monospace",
+            fontSize: "11px",
+            color: "#A0AABB",
+            margin: "6px 0 0",
           }}
         >
-          Select Payer
-        </label>
-        <div
-          className="rounded-lg"
-          style={{
-            background: "#FFFFFF",
-            borderWidth: "0.5px",
-            borderStyle: "solid",
-            borderColor: "#E8EBF2",
-            overflow: "hidden",
-          }}
-        >
-          <select
-            value={payer}
-            onChange={(e) => setPayer(e.target.value)}
-            className="w-full bg-transparent outline-none appearance-none px-4"
-            style={{
-              fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-              fontSize: "14px",
-              color: payer ? "#0D1C3A" : "#A0AABB",
-              height: 44,
-              cursor: "pointer",
-            }}
-          >
-            <option value="" disabled>Select a payer...</option>
-            {DEMO_PAYERS.map((p) => (
-              <option key={p} value={p}>{p}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Plan type select */}
-      <div className="url-field mb-6">
-        <label
-          style={{
-            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-            fontSize: "12px",
-            fontWeight: 500,
-            color: "#6A7590",
-            display: "block",
-            marginBottom: 6,
-          }}
-        >
-          Plan Type
-        </label>
-        <div
-          className="rounded-lg"
-          style={{
-            background: "#FFFFFF",
-            borderWidth: "0.5px",
-            borderStyle: "solid",
-            borderColor: "#E8EBF2",
-            overflow: "hidden",
-          }}
-        >
-          <select
-            value={planType}
-            onChange={(e) => setPlanType(e.target.value)}
-            className="w-full bg-transparent outline-none appearance-none px-4"
-            style={{
-              fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-              fontSize: "14px",
-              color: planType ? "#0D1C3A" : "#A0AABB",
-              height: 44,
-              cursor: "pointer",
-            }}
-          >
-            <option value="" disabled>Select plan type...</option>
-            {PLAN_TYPES.map((pt) => (
-              <option key={pt} value={pt}>{pt}</option>
-            ))}
-          </select>
-        </div>
+          Payer and plan type are extracted automatically from the document
+        </p>
       </div>
 
       {/* Submit */}
@@ -231,7 +148,7 @@ export function PasteURL({ onStageChange }: PasteURLProps) {
             cursor: canSubmit ? "pointer" : "not-allowed",
           }}
         >
-          Fetch Policy
+          Fetch & Extract Policy
         </motion.button>
       </div>
 

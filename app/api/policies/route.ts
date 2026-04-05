@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import type { PolicyDocument } from '@/lib/types';
+import { toLibraryPolicies } from '@/lib/db/policy-mapper';
+import type { MedicalBenefitPolicy } from '@/lib/types/policy';
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,13 +13,13 @@ export async function GET(request: NextRequest) {
     const date_to    = searchParams.get('date_to')    ?? undefined;
 
     let query = supabase
-      .from('policy_documents')
+      .from('medical_benefit_policies')
       .select('*')
       .order('drug_name', { ascending: true })
       .order('effective_date', { ascending: false });
 
     if (payer_id)  query = query.eq('payer_id', payer_id);
-    if (drug_id)   query = query.eq('drug_id', drug_id);
+    if (drug_id)   query = query.eq('drug_generic', drug_id);
     if (drug_name) query = query.ilike('drug_name', `%${drug_name}%`);
     if (date_from) query = query.gte('effective_date', date_from);
     if (date_to)   query = query.lte('effective_date', date_to);
@@ -29,7 +30,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const policies = (rows ?? []) as unknown as PolicyDocument[];
+    const medicalPolicies = (rows ?? []) as unknown as MedicalBenefitPolicy[];
+    const policies = toLibraryPolicies(medicalPolicies);
 
     return NextResponse.json(policies, { status: 200 });
   } catch (err: unknown) {

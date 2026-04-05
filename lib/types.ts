@@ -1,4 +1,5 @@
-export type CoverageStatus = 'covered' | 'pa_required' | 'denied' | 'not_covered';
+export type CoverageStatus = 'covered' | 'not_covered' | 'no_policy_found' | 'pharmacy_only';
+export type FormularyTier = 'preferred_specialty' | 'non_specialty' | 'non_preferred' | 'not_covered' | null;
 export type Persona = 'analyst' | 'mfr' | 'plan';
 
 export interface PolicyDocument {
@@ -8,6 +9,7 @@ export interface PolicyDocument {
   drug_generic:         string;
   j_code:               string;
   coverage_status:      CoverageStatus;
+  formulary_tier:       FormularyTier;
   prior_auth_required:  boolean;
   prior_auth_criteria:  string;
   step_therapy:         boolean;

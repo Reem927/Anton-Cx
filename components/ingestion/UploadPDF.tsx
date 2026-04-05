@@ -4,7 +4,6 @@ import { useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
-import { DEMO_PAYERS, PLAN_TYPES } from "./constants";
 import type { IngestionStage } from "./IngestionProgress";
 import { IngestionProgress } from "./IngestionProgress";
 
@@ -14,8 +13,6 @@ interface UploadPDFProps {
 
 export function UploadPDF({ onStageChange }: UploadPDFProps) {
   const [file, setFile] = useState<File | null>(null);
-  const [payer, setPayer] = useState("");
-  const [planType, setPlanType] = useState("");
   const [stage, setStage] = useState<IngestionStage>("idle");
   const [error, setError] = useState("");
   const [dragging, setDragging] = useState(false);
@@ -52,7 +49,7 @@ export function UploadPDF({ onStageChange }: UploadPDFProps) {
   );
 
   const handleExtract = async () => {
-    if (!file || !payer) return;
+    if (!file) return;
 
     setError("");
     updateStage("fetching");
@@ -68,8 +65,6 @@ export function UploadPDF({ onStageChange }: UploadPDFProps) {
         body: JSON.stringify({
           source: "pdf_upload",
           pdf_base64: base64,
-          payer_name: payer,
-          plan_type: planType || undefined,
         }),
       });
 
@@ -87,7 +82,7 @@ export function UploadPDF({ onStageChange }: UploadPDFProps) {
     }
   };
 
-  const canSubmit = file && payer && (stage === "idle" || stage === "success" || stage === "error");
+  const canSubmit = file && (stage === "idle" || stage === "success" || stage === "error");
 
   return (
     <div ref={containerRef}>
@@ -175,98 +170,10 @@ export function UploadPDF({ onStageChange }: UploadPDFProps) {
                   margin: 0,
                 }}
               >
-                PDF format only
+                PDF format only · Payer and plan type are extracted automatically
               </p>
             </>
           )}
-        </div>
-      </div>
-
-      {/* Payer select */}
-      <div className="upload-field mb-4">
-        <label
-          style={{
-            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-            fontSize: "12px",
-            fontWeight: 500,
-            color: "#6A7590",
-            display: "block",
-            marginBottom: 6,
-          }}
-        >
-          Select Payer
-        </label>
-        <div
-          className="rounded-lg"
-          style={{
-            background: "#FFFFFF",
-            borderWidth: "0.5px",
-            borderStyle: "solid",
-            borderColor: "#E8EBF2",
-            overflow: "hidden",
-          }}
-        >
-          <select
-            value={payer}
-            onChange={(e) => setPayer(e.target.value)}
-            className="w-full bg-transparent outline-none appearance-none px-4"
-            style={{
-              fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-              fontSize: "14px",
-              color: payer ? "#0D1C3A" : "#A0AABB",
-              height: 44,
-              cursor: "pointer",
-            }}
-          >
-            <option value="" disabled>Select a payer...</option>
-            {DEMO_PAYERS.map((p) => (
-              <option key={p} value={p}>{p}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Plan type select */}
-      <div className="upload-field mb-6">
-        <label
-          style={{
-            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-            fontSize: "12px",
-            fontWeight: 500,
-            color: "#6A7590",
-            display: "block",
-            marginBottom: 6,
-          }}
-        >
-          Plan Type
-        </label>
-        <div
-          className="rounded-lg"
-          style={{
-            background: "#FFFFFF",
-            borderWidth: "0.5px",
-            borderStyle: "solid",
-            borderColor: "#E8EBF2",
-            overflow: "hidden",
-          }}
-        >
-          <select
-            value={planType}
-            onChange={(e) => setPlanType(e.target.value)}
-            className="w-full bg-transparent outline-none appearance-none px-4"
-            style={{
-              fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-              fontSize: "14px",
-              color: planType ? "#0D1C3A" : "#A0AABB",
-              height: 44,
-              cursor: "pointer",
-            }}
-          >
-            <option value="" disabled>Select plan type...</option>
-            {PLAN_TYPES.map((pt) => (
-              <option key={pt} value={pt}>{pt}</option>
-            ))}
-          </select>
         </div>
       </div>
 
@@ -310,7 +217,6 @@ function fileToBase64(file: File): Promise<string> {
     const reader = new FileReader();
     reader.onload = () => {
       const result = reader.result as string;
-      // Strip the data:...;base64, prefix
       resolve(result.split(",")[1]);
     };
     reader.onerror = reject;

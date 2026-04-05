@@ -1,21 +1,45 @@
 // ── POST /api/ingest ────────────────────────────────────────────────
 // Policy ingestion endpoint. Three modes:
 //   1. auto_fetch  — drug name/HCPCS + payer → MCP server → Claude → Supabase
-//   2. pdf_upload  — base64 PDF + payer → Claude → Supabase
+//   2. pdf_upload  — base64 PDF → Claude → Supabase
 //   3. url_paste   — URL → fetch content → Claude → Supabase
+//
+// payer_name is optional for pdf_upload and url_paste — Claude extracts
+// the payer and plan type directly from the document.
 //
 // Returns the extracted policy (medical and/or pharmacy) or error.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { extractFromPdf, extractFromText } from '@/lib/extraction';
-import { fetchPolicyFromMcp } from '@/lib/mcp/policy-fetch';
+import { fetchPolicyFromMcp, scrapeDirectUrl } from '@/lib/mcp/policy-fetch';
 import { saveMedicalPolicy, savePharmacyPolicy } from '@/lib/db/policies';
 import type { IngestionSource } from '@/lib/types/policy';
+
+/**
+ * Strip HTML tags and collapse whitespace to get readable text.
+ * Used as fallback when Crawl4AI scraper is unavailable.
+ */
+function stripHtml(html: string): string {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<nav[\s\S]*?<\/nav>/gi, '')
+    .replace(/<footer[\s\S]*?<\/footer>/gi, '')
+    .replace(/<header[\s\S]*?<\/header>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&#\d+;/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 interface IngestBody {
   drug_name?:  string;
   hcpcs_code?: string;
-  payer_name:  string;
+  payer_name?: string;
   source:      IngestionSource;
   pdf_base64?: string;
   url?:        string;
@@ -25,14 +49,18 @@ export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as IngestBody;
 
-    // ── Validate request ──
-    if (!body.payer_name) {
-      return NextResponse.json({ error: 'payer_name is required' }, { status: 400 });
-    }
-
     if (!body.source || !['pdf_upload', 'url_paste', 'auto_fetch'].includes(body.source)) {
       return NextResponse.json({ error: 'source must be pdf_upload, url_paste, or auto_fetch' }, { status: 400 });
     }
+
+    // auto_fetch still requires payer_name (MCP needs it to find the right document)
+    if (body.source === 'auto_fetch' && !body.payer_name) {
+      return NextResponse.json({ error: 'auto_fetch requires payer_name' }, { status: 400 });
+    }
+
+    // For pdf_upload and url_paste, payer_name is optional —
+    // Claude extracts it from the document content.
+    const payerHint = body.payer_name || 'Unknown';
 
     // ── Route by source type ──
     let result;
@@ -50,7 +78,7 @@ export async function POST(request: NextRequest) {
         const fetchResult = await fetchPolicyFromMcp({
           drug_name:  body.drug_name,
           hcpcs_code: body.hcpcs_code,
-          payer_name: body.payer_name,
+          payer_name: body.payer_name!,
         });
 
         if (!fetchResult.success) {
@@ -63,7 +91,7 @@ export async function POST(request: NextRequest) {
         if (fetchResult.content_type === 'pdf' && fetchResult.pdf_base64) {
           result = await extractFromPdf(
             fetchResult.pdf_base64,
-            body.payer_name,
+            body.payer_name!,
             body.drug_name,
             'auto_fetch',
             fetchResult.source_url,
@@ -71,7 +99,7 @@ export async function POST(request: NextRequest) {
         } else if (fetchResult.content_type === 'text' && fetchResult.text_content) {
           result = await extractFromText(
             fetchResult.text_content,
-            body.payer_name,
+            body.payer_name!,
             body.drug_name,
             'auto_fetch',
             fetchResult.source_url,
@@ -90,7 +118,7 @@ export async function POST(request: NextRequest) {
 
         result = await extractFromPdf(
           body.pdf_base64,
-          body.payer_name,
+          payerHint,
           body.drug_name,
           'pdf_upload',
         );
@@ -103,48 +131,78 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'url_paste requires url' }, { status: 400 });
         }
 
-        // Fetch the document from the URL
-        const urlResponse = await fetch(body.url);
-        if (!urlResponse.ok) {
-          return NextResponse.json(
-            { error: `Failed to fetch URL: ${urlResponse.status} ${urlResponse.statusText}` },
-            { status: 502 }
-          );
-        }
+        // Try Crawl4AI scraper first (better at extracting clean text from HTML)
+        const scraped = await scrapeDirectUrl(body.url, payerHint, body.drug_name);
 
-        const contentType = urlResponse.headers.get('content-type') ?? '';
-
-        if (contentType.includes('application/pdf')) {
-          const buffer = await urlResponse.arrayBuffer();
-          const base64 = Buffer.from(buffer).toString('base64');
+        if (scraped.success && scraped.content_type === 'pdf' && scraped.pdf_base64) {
           result = await extractFromPdf(
-            base64,
-            body.payer_name,
+            scraped.pdf_base64,
+            payerHint,
+            body.drug_name,
+            'url_paste',
+            body.url,
+          );
+        } else if (scraped.success && scraped.content_type === 'text' && scraped.text_content) {
+          result = await extractFromText(
+            scraped.text_content,
+            payerHint,
             body.drug_name,
             'url_paste',
             body.url,
           );
         } else {
-          // Treat as text (HTML pages, plain text policy documents)
-          const text = await urlResponse.text();
-          result = await extractFromText(
-            text,
-            body.payer_name,
-            body.drug_name,
-            'url_paste',
-            body.url,
-          );
+          // Fallback: direct fetch if scraper is unavailable
+          const urlResponse = await fetch(body.url);
+          if (!urlResponse.ok) {
+            return NextResponse.json(
+              { error: `Failed to fetch URL: ${urlResponse.status} ${urlResponse.statusText}` },
+              { status: 502 }
+            );
+          }
+
+          const contentType = urlResponse.headers.get('content-type') ?? '';
+
+          if (contentType.includes('application/pdf')) {
+            const buffer = await urlResponse.arrayBuffer();
+            const base64 = Buffer.from(buffer).toString('base64');
+            result = await extractFromPdf(
+              base64,
+              payerHint,
+              body.drug_name,
+              'url_paste',
+              body.url,
+            );
+          } else {
+            // Strip HTML to get clean text for Claude
+            const rawText = await urlResponse.text();
+            const cleanText = stripHtml(rawText);
+
+            if (cleanText.length < 100) {
+              return NextResponse.json(
+                { error: 'Could not extract meaningful content from this URL' },
+                { status: 422 }
+              );
+            }
+
+            result = await extractFromText(
+              cleanText,
+              payerHint,
+              body.drug_name,
+              'url_paste',
+              body.url,
+            );
+          }
         }
         break;
       }
     }
 
-    // ── Save to Supabase ──
-    if (result?.medical_policy) {
-      await saveMedicalPolicy(result.medical_policy);
+    // ── Save all split policies to Supabase ──
+    if (result?.medical_policies?.length) {
+      await Promise.all(result.medical_policies.map(p => saveMedicalPolicy(p)));
     }
-    if (result?.pharmacy_policy) {
-      await savePharmacyPolicy(result.pharmacy_policy);
+    if (result?.pharmacy_policies?.length) {
+      await Promise.all(result.pharmacy_policies.map(p => savePharmacyPolicy(p)));
     }
 
     return NextResponse.json(result, { status: 200 });
