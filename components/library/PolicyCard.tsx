@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { StatusPill } from "@/components/ui/StatusPill";
-import { PAYER_ABBR, PAYER_DISPLAY, formatDate } from "./utils";
+import { PAYER_ABBR, PAYER_DISPLAY } from "./utils";
 import type { DrugGroup } from "@/app/(app)/policy-lib/page";
 
 const STATUS_STRIPE: Record<string, string> = {

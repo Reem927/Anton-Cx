@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePersona } from "@/lib/persona-context";
 import type { Persona } from "@/lib/types";
@@ -28,6 +28,14 @@ const PERSONA_OPTIONS: { value: Persona; label: string; description: string }[] 
 ];
 
 export default function SettingsPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 40, color: "#6A7590" }}>Loading settings...</div>}>
+      <SettingsPageContent />
+    </Suspense>
+  );
+}
+
+function SettingsPageContent() {
   const searchParams              = useSearchParams();
   const router                    = useRouter();
   const initialSection            = (searchParams.get("section") as SectionId | null) ?? "profile";

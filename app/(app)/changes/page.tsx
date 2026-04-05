@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
 import type { FieldDiff, ChangeTrackingResult } from "@/lib/types";
 import { getChangeSeverityColor } from "@/lib/changeTracker";
 
