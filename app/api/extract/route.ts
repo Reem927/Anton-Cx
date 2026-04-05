@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { extractFromPdf } from '@/lib/extraction';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase-server';
 import { getChangedFields } from '@/lib/diff';
 import type { PolicyDocument } from '@/lib/types';
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const body = await request.json() as {
       pdf:       string;
       payer_id:  string;
