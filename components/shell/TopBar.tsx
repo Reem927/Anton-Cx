@@ -143,7 +143,6 @@ export function TopBar({
 
         {/* Persona switcher */}
         <PersonaSwitcher current={persona} onChange={onPersonaChange} />
-
         <UserMenu />
       </div>
     </header>

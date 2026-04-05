@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import type { Persona } from "@/lib/types";
 
 interface PersonaSwitcherProps {
@@ -45,7 +45,6 @@ export function PersonaSwitcher({ current, onChange }: PersonaSwitcherProps) {
             <motion.span
               animate={{
                 color: isActive ? "#FFFFFF" : "#6A7590",
-                scale: isActive ? [0.9, 1.05, 1] : 1,
               }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
               className="relative z-10"

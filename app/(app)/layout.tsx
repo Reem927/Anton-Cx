@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { TopBar } from "@/components/shell/TopBar";
 import { Sidebar } from "@/components/shell/Sidebar";
 import { PersonaProvider, usePersona } from "@/lib/persona-context";
-import type { Persona } from "@/lib/types";
+
 
 const SIDEBAR_KEY = "anton-cx-sidebar";
 
@@ -34,7 +34,10 @@ function AppShell({ children }: { children: React.ReactNode }) {
         onPersonaChange={setPersona}
       />
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar />
+        <Sidebar
+          expanded={sidebarExpanded}
+          onToggle={toggleSidebar}
+        />
         <main className="flex-1 overflow-auto" style={{ background: "#F7F8FC" }}>
           {/* Persona cross-fade */}
           <AnimatePresence mode="wait">

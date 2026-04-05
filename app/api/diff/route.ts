@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { supabase } from '@/lib/supabase';
 import { diffPolicies } from '@/lib/diff';
 import type { PolicyDocument, DiffResult } from '@/lib/types';
 
@@ -17,20 +17,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const [rowA, rowB] = await Promise.all([
-      prisma.policyDocument.findUnique({ where: { id: body.policy_id_a } }),
-      prisma.policyDocument.findUnique({ where: { id: body.policy_id_b } }),
+    const [resA, resB] = await Promise.all([
+      supabase.from('policy_documents').select('*').eq('id', body.policy_id_a).single(),
+      supabase.from('policy_documents').select('*').eq('id', body.policy_id_b).single(),
     ]);
 
-    if (!rowA) {
+    if (resA.error || !resA.data) {
       return NextResponse.json({ error: `Policy not found: ${body.policy_id_a}` }, { status: 404 });
     }
-    if (!rowB) {
+    if (resB.error || !resB.data) {
       return NextResponse.json({ error: `Policy not found: ${body.policy_id_b}` }, { status: 404 });
     }
 
-    const policyA = deserializePolicy(rowA as unknown as Record<string, unknown>);
-    const policyB = deserializePolicy(rowB as unknown as Record<string, unknown>);
+    const policyA = resA.data as unknown as PolicyDocument;
+    const policyB = resB.data as unknown as PolicyDocument;
 
     const diffs: DiffResult[] = diffPolicies(policyA, policyB);
 
@@ -39,13 +39,4 @@ export async function POST(request: NextRequest) {
     const message = err instanceof Error ? err.message : 'Diff failed';
     return NextResponse.json({ error: message }, { status: 500 });
   }
-}
-
-function deserializePolicy(row: Record<string, unknown>): PolicyDocument {
-  return {
-    ...(row as PolicyDocument),
-    step_therapy_drugs: JSON.parse(row.step_therapy_drugs as string ?? '[]'),
-    indications:        JSON.parse(row.indications as string ?? '[]'),
-    changed_fields:     JSON.parse(row.changed_fields as string ?? '[]'),
-  };
 }
