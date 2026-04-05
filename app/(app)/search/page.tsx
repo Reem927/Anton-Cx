@@ -30,9 +30,9 @@ const MOCK_RESULTS = {
       "What changed in Keytruda policies last quarter?",
     ],
     policies: [
-      { payer: "Cigna", drug: "Pembrolizumab (Keytruda)", date: "Jan 2025", type: "Medical Benefit", pages: 12 },
-      { payer: "UnitedHealthcare", drug: "Pembrolizumab (Keytruda)", date: "Dec 2024", type: "Medical Benefit", pages: 9 },
-      { payer: "Priority Health", drug: "Oncology Drug List", date: "2026", type: "Medical Benefit", pages: 47 },
+      { payer: "Cigna", drug: "Pembrolizumab (Keytruda)", drug_generic: "pembrolizumab", date: "Jan 2025", type: "Medical Benefit", pages: 12, id: null },
+      { payer: "UnitedHealthcare", drug: "Pembrolizumab (Keytruda)", drug_generic: "pembrolizumab", date: "Dec 2024", type: "Medical Benefit", pages: 9, id: null },
+      { payer: "Priority Health", drug: "Oncology Drug List", drug_generic: "pembrolizumab", date: "2026", type: "Medical Benefit", pages: 47, id: null },
     ],
   },
 };
@@ -103,6 +103,142 @@ function TypingText({ text, onDone }: { text: string; onDone?: () => void }) {
   return <span>{displayed}</span>;
 }
 
+async function downloadPolicyPdf(drugGeneric: string, drugName: string, policyId: string | null) {
+  const params = policyId
+    ? `policy_id=${encodeURIComponent(policyId)}`
+    : `drug=${encodeURIComponent(drugGeneric)}`;
+  const res = await fetch(`/api/generate-pdf?${params}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: "Download failed" }));
+    throw new Error(err.error ?? "Download failed");
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${drugName.replace(/\s+/g, "-")}-policy-report.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+interface PolicyData {
+  payer: string;
+  drug: string;
+  drug_generic: string;
+  date: string;
+  type: string;
+  pages: number;
+  id: string | null;
+}
+
+function PolicySourceCard({ pol }: { pol: PolicyData }) {
+  const [state, setState] = useState<"idle" | "loading" | "error">("idle");
+
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (state === "loading") return;
+    setState("loading");
+    try {
+      await downloadPolicyPdf(pol.drug_generic, pol.drug, pol.id);
+      setState("idle");
+    } catch {
+      setState("error");
+      setTimeout(() => setState("idle"), 3000);
+    }
+  };
+
+  return (
+    <div
+      style={{
+        background: "#FFFFFF",
+        border: `0.5px solid ${state === "error" ? "#E53935" : "#E8EBF2"}`,
+        borderRadius: 10,
+        padding: "14px 16px",
+        marginBottom: 8,
+        display: "flex",
+        alignItems: "center",
+        gap: 14,
+        cursor: "pointer",
+        transition: "border-color 0.15s",
+      }}
+      onMouseEnter={e => { if (state !== "error") e.currentTarget.style.borderColor = "#2E6BE6"; }}
+      onMouseLeave={e => { if (state !== "error") e.currentTarget.style.borderColor = "#E8EBF2"; }}
+    >
+      <div style={{
+        width: 36, height: 36, borderRadius: 8,
+        background: "#EBF0FC",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        flexShrink: 0,
+      }}>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <rect x="2" y="1" width="10" height="13" rx="2" stroke="#2E6BE6" strokeWidth="1"/>
+          <path d="M5 5h5M5 8h5M5 11h3" stroke="#2E6BE6" strokeWidth="0.8" strokeLinecap="round"/>
+        </svg>
+      </div>
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 14, fontWeight: 500, color: "#0D1C3A", marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          {pol.drug}
+        </div>
+        <div style={{ fontSize: 12, color: "#6A7590", fontFamily: "'DM Mono', monospace" }}>
+          {pol.payer} · {pol.type} · {pol.date} · {pol.pages}p
+        </div>
+      </div>
+
+      <button
+        onClick={handleDownload}
+        disabled={state === "loading"}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 5,
+          background: state === "error" ? "#FFEBEE" : state === "loading" ? "#EBF0FC" : "#F7F8FC",
+          border: `0.5px solid ${state === "error" ? "#E53935" : state === "loading" ? "#2E6BE6" : "#E8EBF2"}`,
+          borderRadius: 6,
+          padding: "5px 12px",
+          fontSize: 11,
+          color: state === "error" ? "#B71C1C" : state === "loading" ? "#2E6BE6" : "#6A7590",
+          fontFamily: "'DM Mono', monospace",
+          cursor: state === "loading" ? "not-allowed" : "pointer",
+          flexShrink: 0,
+          transition: "all 0.15s",
+          whiteSpace: "nowrap",
+        }}
+        onMouseEnter={e => { if (state === "idle") { e.currentTarget.style.background = "#EBF0FC"; e.currentTarget.style.color = "#2E6BE6"; e.currentTarget.style.borderColor = "#2E6BE6"; }}}
+        onMouseLeave={e => { if (state === "idle") { e.currentTarget.style.background = "#F7F8FC"; e.currentTarget.style.color = "#6A7590"; e.currentTarget.style.borderColor = "#E8EBF2"; }}}
+      >
+        {state === "loading" ? (
+          <>
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="none" style={{ animation: "spin 1s linear infinite" }}>
+              <circle cx="5.5" cy="5.5" r="4" stroke="#2E6BE6" strokeWidth="1.5" strokeDasharray="12 4"/>
+            </svg>
+            Generating…
+          </>
+        ) : state === "error" ? (
+          <>
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+              <circle cx="5.5" cy="5.5" r="4.5" stroke="#E53935" strokeWidth="1"/>
+              <path d="M5.5 3v3M5.5 8v.5" stroke="#E53935" strokeWidth="1" strokeLinecap="round"/>
+            </svg>
+            Failed
+          </>
+        ) : (
+          <>
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+              <path d="M5.5 1v6M2.5 5l3 3 3-3" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M1 9h9" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
+            </svg>
+            PDF
+          </>
+        )}
+      </button>
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+}
+
 function AnswerBlock({ result, onFollowUp }: { result: typeof MOCK_RESULTS.default; onFollowUp: (q: string) => void }) {
   const [done, setDone] = useState(false);
   return (
@@ -156,22 +292,7 @@ function AnswerBlock({ result, onFollowUp }: { result: typeof MOCK_RESULTS.defau
             SOURCE POLICIES — {result.policies.length} DOCUMENTS
           </div>
           {result.policies.map((pol, i) => (
-            <div key={i} style={{ background: "#FFFFFF", border: "0.5px solid #E8EBF2", borderRadius: 10, padding: "14px 16px", marginBottom: 8, display: "flex", alignItems: "center", gap: 14, cursor: "pointer", transition: "border-color 0.15s" }}
-              onMouseEnter={e => e.currentTarget.style.borderColor = "#2E6BE6"}
-              onMouseLeave={e => e.currentTarget.style.borderColor = "#E8EBF2"}
-            >
-              <div style={{ width: 36, height: 36, borderRadius: 8, background: "#EBF0FC", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <rect x="2" y="1" width="10" height="13" rx="2" stroke="#2E6BE6" strokeWidth="1"/>
-                  <path d="M5 5h5M5 8h5M5 11h3" stroke="#2E6BE6" strokeWidth="0.8" strokeLinecap="round"/>
-                </svg>
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 14, fontWeight: 500, color: "#0D1C3A", marginBottom: 2 }}>{pol.drug}</div>
-                <div style={{ fontSize: 12, color: "#6A7590", fontFamily: "'DM Mono', monospace" }}>{pol.payer} · {pol.type} · {pol.date} · {pol.pages}p</div>
-              </div>
-              <div style={{ background: "#F7F8FC", border: "0.5px solid #E8EBF2", borderRadius: 6, padding: "4px 10px", fontSize: 11, color: "#6A7590", fontFamily: "'DM Mono', monospace", flexShrink: 0 }}>PDF</div>
-            </div>
+            <PolicySourceCard key={i} pol={pol} />
           ))}
         </div>
       )}
