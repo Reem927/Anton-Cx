@@ -1,144 +1,451 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { SearchHero } from "@/components/search/SearchHero";
-import { PolicyResultCard } from "@/components/search/PolicyResultCard";
-import { usePersona } from "@/lib/persona-context";
-import { getPersonaConfig } from "@/lib/persona";
-import { SEED_POLICIES } from "@/lib/seed-data";
+import { useState, useEffect, useRef } from "react";
 
-export default function SearchPage() {
-  const { persona }          = usePersona();
-  const config               = getPersonaConfig(persona);
-  const [query, setQuery]    = useState("");
-  const [filter, setFilter]  = useState(config.filters[0]);
+const PAYERS = ["UnitedHealthcare", "Cigna", "BCBS NC", "UPMC", "Priority Health", "EmblemHealth", "Florida Blue"];
 
-  const results = useMemo(() => {
-    let list = SEED_POLICIES;
+const EXAMPLE_QUESTIONS = [
+  "Does Cigna cover Keytruda for lung cancer?",
+  "What step therapy does UHC require for Humira?",
+  "Which plans require biosimilar trial before Rituximab?",
+  "What are the PA criteria for Opdivo at BCBS NC?",
+  "How does UPMC handle bevacizumab site of care?",
+];
 
-    if (query) {
-      const q = query.toLowerCase();
-      list = list.filter(
-        (p) =>
-          p.drug_name.toLowerCase().includes(q) ||
-          p.drug_generic.toLowerCase().includes(q) ||
-          p.j_code.toLowerCase().includes(q) ||
-          p.payer_id.toLowerCase().includes(q)
-      );
-    }
+const MOCK_RESULTS = {
+  default: {
+    answer: `Yes — Cigna covers Keytruda (pembrolizumab) under their commercial medical benefit for non-small cell lung cancer. Coverage requires PD-L1 expression ≥1% confirmed by pathology report, ECOG performance status 0–2, and prior authorization. No step therapy is required for first-line treatment. Site of care is restricted to physician office or ambulatory infusion center.`,
+    source: "Cigna Drug Policy — Pembrolizumab (Jan 2025), p.3",
+    sourceUrl: "#",
+    coverageStates: [
+      { payer: "UHC", status: "covered", tier: "Preferred Specialty", badge: "PA Required" },
+      { payer: "Cigna", status: "covered", tier: "Non-Preferred", badge: "PA Required" },
+      { payer: "BCBS NC", status: "not_covered", tier: null, badge: "See alternatives" },
+      { payer: "UPMC", status: "pharmacy_only", tier: null, badge: "Pharmacy version exists" },
+      { payer: "Priority Health", status: "covered", tier: "Preferred Specialty", badge: "PA Required" },
+    ],
+    followUps: [
+      "What step therapy does UHC require for Keytruda?",
+      "Compare Keytruda coverage across all payers",
+      "What changed in Keytruda policies last quarter?",
+    ],
+    policies: [
+      { payer: "Cigna", drug: "Pembrolizumab (Keytruda)", date: "Jan 2025", type: "Medical Benefit", pages: 12 },
+      { payer: "UnitedHealthcare", drug: "Pembrolizumab (Keytruda)", date: "Dec 2024", type: "Medical Benefit", pages: 9 },
+      { payer: "Priority Health", drug: "Oncology Drug List", date: "2026", type: "Medical Benefit", pages: 47 },
+    ],
+  },
+};
 
-    // Apply filter
-    if (filter === "PA required") {
-      list = list.filter((p) => p.prior_auth_required);
-    } else if (filter === "Changed this qtr") {
-      list = list.filter((p) => p.changed_fields.length > 0);
-    } else if (filter === "Denied") {
-      list = list.filter((p) => p.coverage_status === "not_covered");
-    } else if (filter === "Open access") {
-      list = list.filter((p) => p.coverage_status === "covered");
-    } else if (filter === "Restricted") {
-      list = list.filter((p) => p.coverage_status !== "covered");
-    } else if (filter === "My policy only") {
-      list = list.filter((p) => p.payer_id === "bcbs-tx");
-    } else if (filter === "Outliers" || filter === "More restrictive") {
-      list = list.filter((p) => p.coverage_status === "not_covered");
-    } else if (filter === "More permissive") {
-      list = list.filter((p) => p.coverage_status === "covered");
-    } else if (filter === "Changed") {
-      list = list.filter((p) => p.changed_fields.length > 0);
-    }
+const statusConfig = {
+  covered: { bg: "#E8F5E9", border: "#43A047", text: "#2E7D32", label: "Covered" },
+  not_covered: { bg: "#FFEBEE", border: "#E53935", text: "#B71C1C", label: "Not Covered" },
+  pharmacy_only: { bg: "#FFF8E1", border: "#FB8C00", text: "#E65100", label: "Pharmacy Only" },
+  no_policy: { bg: "#F5F5F5", border: "#9E9E9E", text: "#424242", label: "No Policy Found" },
+};
 
-    return list;
-  }, [query, filter]);
+function CoverageCard({ payer, status, tier, badge }: { payer: string; status: string; tier: string | null; badge: string | null }) {
+  const cfg = statusConfig[status as keyof typeof statusConfig] || statusConfig.no_policy;
+  return (
+    <div style={{
+      background: cfg.bg,
+      border: `1px solid ${cfg.border}`,
+      borderRadius: 10,
+      padding: "12px 14px",
+      minWidth: 140,
+      flex: "1 1 140px",
+    }}>
+      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "#6A7590", letterSpacing: "0.05em", marginBottom: 4 }}>
+        {payer}
+      </div>
+      <div style={{ fontWeight: 600, fontSize: 13, color: cfg.text, marginBottom: 4 }}>{cfg.label}</div>
+      {tier && <div style={{ fontSize: 11, color: cfg.text, opacity: 0.8, marginBottom: 4 }}>{tier}</div>}
+      {badge && (
+        <div style={{
+          display: "inline-block",
+          background: "rgba(0,0,0,0.08)",
+          borderRadius: 4,
+          padding: "2px 6px",
+          fontSize: 10,
+          color: cfg.text,
+          fontFamily: "'DM Mono', monospace",
+        }}>{badge}</div>
+      )}
+    </div>
+  );
+}
+
+function TypingText({ text, onDone }: { text: string; onDone?: () => void }) {
+  const [displayed, setDisplayed] = useState("");
+  const idx = useRef(0);
+  useEffect(() => {
+    setDisplayed("");
+    idx.current = 0;
+    const interval = setInterval(() => {
+      idx.current++;
+      setDisplayed(text.slice(0, idx.current));
+      if (idx.current >= text.length) {
+        clearInterval(interval);
+        onDone && onDone();
+      }
+    }, 8);
+    return () => clearInterval(interval);
+  }, [text, onDone]);
+  return <span>{displayed}</span>;
+}
+
+export default function PolicySearch() {
+  const [query, setQuery] = useState("");
+  const [activeFilters, setActiveFilters] = useState<string[]>([]);
+  const [searched, setSearched] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [answerDone, setAnswerDone] = useState(false);
+  const [showPolicies, setShowPolicies] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const result = MOCK_RESULTS.default;
+
+  const toggleFilter = (payer: string) => {
+    setActiveFilters(prev =>
+      prev.includes(payer) ? prev.filter(p => p !== payer) : [...prev, payer]
+    );
+  };
+
+  const handleSearch = (q?: string) => {
+    const text = q || query;
+    if (!text.trim()) return;
+    setQuery(text);
+    setSearched(false);
+    setAnswerDone(false);
+    setShowPolicies(false);
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      setSearched(true);
+    }, 1200);
+  };
+
+  const handleKey = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") handleSearch();
+  };
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1
-          style={{
-            fontFamily:   "var(--font-syne), Syne, sans-serif",
-            fontSize:     "22px",
-            fontWeight:   800,
-            color:        "#0D1C3A",
-            marginBottom: "4px",
-          }}
-        >
-          Policy Search
-        </h1>
-        <p
-          style={{
-            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-            fontSize:   "13px",
-            color:      "#6A7590",
-          }}
-        >
-          {config.bannerText}
-        </p>
-      </div>
+    <div style={{
+      fontFamily: "'DM Sans', sans-serif",
+      background: "#F7F8FC",
+      minHeight: "100vh",
+      padding: "0 0 60px",
+    }}>
+      {/* Top search zone */}
+      <div style={{
+        background: "#FFFFFF",
+        borderBottom: "0.5px solid #E8EBF2",
+        padding: searched ? "24px 32px 20px" : "72px 32px 64px",
+        transition: "padding 0.4s ease",
+      }}>
+        {!searched && (
+          <div style={{ textAlign: "center", marginBottom: 32 }}>
+            <div style={{
+              fontFamily: "'Syne', sans-serif",
+              fontSize: 13,
+              letterSpacing: "0.12em",
+              color: "#2E6BE6",
+              textTransform: "uppercase",
+              marginBottom: 12,
+              fontWeight: 600,
+            }}>Policy Intelligence</div>
+            <h1 style={{
+              fontFamily: "'Syne', sans-serif",
+              fontSize: 36,
+              fontWeight: 700,
+              color: "#0D1C3A",
+              margin: "0 0 10px",
+              letterSpacing: "-0.02em",
+            }}>Ask anything about drug coverage</h1>
+            <p style={{ color: "#6A7590", fontSize: 15, margin: 0 }}>
+              Search across all ingested payer policies — medical benefit, oncology, biologics
+            </p>
+          </div>
+        )}
 
-      <div className="mb-6">
-        <SearchHero
-          persona={persona}
-          onSearch={setQuery}
-          activeFilter={filter}
-          onFilter={setFilter}
-        />
-      </div>
+        {/* Search bar */}
+        <div style={{
+          maxWidth: 720,
+          margin: "0 auto",
+          position: "relative",
+        }}>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            background: "#FFFFFF",
+            border: "1.5px solid #2E6BE6",
+            borderRadius: 16,
+            padding: "0 16px",
+            boxShadow: "0 2px 16px rgba(46,107,230,0.10)",
+            gap: 10,
+          }}>
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={{ flexShrink: 0 }}>
+              <circle cx="7.5" cy="7.5" r="5.5" stroke="#2E6BE6" strokeWidth="1.5"/>
+              <path d="M13 13L16 16" stroke="#2E6BE6" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            <input
+              ref={inputRef}
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              onKeyDown={handleKey}
+              placeholder='Ask anything… "Does Cigna cover Keytruda for lung cancer?"'
+              style={{
+                flex: 1,
+                border: "none",
+                outline: "none",
+                fontSize: 15,
+                color: "#0D1C3A",
+                background: "transparent",
+                padding: "16px 0",
+                fontFamily: "'DM Sans', sans-serif",
+              }}
+            />
+            <button
+              onClick={() => handleSearch()}
+              style={{
+                background: "#2E6BE6",
+                color: "#fff",
+                border: "none",
+                borderRadius: 10,
+                padding: "8px 20px",
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: "pointer",
+                fontFamily: "'DM Sans', sans-serif",
+                flexShrink: 0,
+              }}
+            >Search</button>
+          </div>
 
-      {/* Results count */}
-      <div
-        className="mb-3"
-        style={{
-          fontFamily:    "var(--font-dm-mono), 'DM Mono', monospace",
-          fontSize:      "10px",
-          color:         "#A0AABB",
-          letterSpacing: "0.06em",
-        }}
-      >
-        {results.length} {results.length === 1 ? "POLICY" : "POLICIES"} FOUND
-      </div>
+          {/* Payer filter pills */}
+          <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap", justifyContent: searched ? "flex-start" : "center" }}>
+            {PAYERS.map(p => (
+              <button
+                key={p}
+                onClick={() => toggleFilter(p)}
+                style={{
+                  background: activeFilters.includes(p) ? "#EBF0FC" : "transparent",
+                  border: `0.5px solid ${activeFilters.includes(p) ? "#2E6BE6" : "#E8EBF2"}`,
+                  borderRadius: 20,
+                  padding: "4px 12px",
+                  fontSize: 12,
+                  color: activeFilters.includes(p) ? "#2E6BE6" : "#6A7590",
+                  cursor: "pointer",
+                  fontFamily: "'DM Mono', monospace",
+                  transition: "all 0.15s",
+                }}
+              >{p}</button>
+            ))}
+          </div>
+        </div>
 
-      {/* Results */}
-      <div className="flex flex-col gap-2">
-        {results.map((policy, i) => (
-          <PolicyResultCard key={policy.id} policy={policy} index={i} />
-        ))}
-        {results.length === 0 && (
-          <div
-            className="py-12 text-center"
-            style={{
-              fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-              fontSize:   "14px",
-              color:      "#A0AABB",
-            }}
-          >
-            No policies match your search.
+        {/* Example questions (empty state) */}
+        {!searched && !loading && (
+          <div style={{ maxWidth: 720, margin: "28px auto 0", display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
+            {EXAMPLE_QUESTIONS.map(q => (
+              <button
+                key={q}
+                onClick={() => { setQuery(q); handleSearch(q); }}
+                style={{
+                  background: "#F7F8FC",
+                  border: "0.5px solid #E8EBF2",
+                  borderRadius: 20,
+                  padding: "6px 14px",
+                  fontSize: 12,
+                  color: "#6A7590",
+                  cursor: "pointer",
+                  fontFamily: "'DM Sans', sans-serif",
+                  transition: "border-color 0.15s, color 0.15s",
+                }}
+                onMouseEnter={e => { (e.target as HTMLButtonElement).style.color = "#2E6BE6"; (e.target as HTMLButtonElement).style.borderColor = "#2E6BE6"; }}
+                onMouseLeave={e => { (e.target as HTMLButtonElement).style.color = "#6A7590"; (e.target as HTMLButtonElement).style.borderColor = "#E8EBF2"; }}
+              >
+                {q}
+              </button>
+            ))}
           </div>
         )}
       </div>
 
-      {/* Action buttons */}
-      <div className="flex gap-2 mt-6">
-        {config.actions.map((action) => (
-          <button
-            key={action}
-            className="rounded px-4 py-2 transition-colors"
-            style={{
-              fontFamily:    "var(--font-dm-sans), 'DM Sans', sans-serif",
-              fontSize:      "13px",
-              fontWeight:    500,
-              background:    action === config.actions[0] ? "#2E6BE6" : "#FFFFFF",
-              color:         action === config.actions[0] ? "#FFFFFF" : "#6A7590",
-              borderWidth:   "0.5px",
-              borderStyle:   "solid",
-              borderColor:   action === config.actions[0] ? "#2E6BE6" : "#E8EBF2",
-              cursor:        "pointer",
-            }}
-          >
-            {action}
-          </button>
-        ))}
-      </div>
+      {/* Loading state */}
+      {loading && (
+        <div style={{ maxWidth: 720, margin: "48px auto", padding: "0 32px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ display: "flex", gap: 5 }}>
+              {[0,1,2].map(i => (
+                <div key={i} style={{
+                  width: 8, height: 8, borderRadius: "50%", background: "#2E6BE6",
+                  animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite`,
+                }} />
+              ))}
+            </div>
+            <span style={{ color: "#6A7590", fontSize: 14 }}>Searching across policy library…</span>
+          </div>
+          <style>{`@keyframes pulse { 0%,80%,100%{opacity:.2} 40%{opacity:1} }`}</style>
+        </div>
+      )}
+
+      {/* Results */}
+      {searched && !loading && (
+        <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 32px 0" }}>
+
+          {/* Zone 2 — AI Answer */}
+          <div style={{ marginBottom: 28 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+              <div style={{
+                background: "#EBF0FC",
+                border: "0.5px solid #2E6BE6",
+                borderRadius: 6,
+                padding: "3px 10px",
+                fontSize: 11,
+                fontFamily: "'DM Mono', monospace",
+                color: "#2E6BE6",
+                fontWeight: 500,
+              }}>AI Answer</div>
+              <div style={{
+                background: "#F7F8FC",
+                border: "0.5px solid #E8EBF2",
+                borderRadius: 6,
+                padding: "3px 10px",
+                fontSize: 11,
+                fontFamily: "'DM Mono', monospace",
+                color: "#A0AABB",
+              }}>Medical Benefit · Oncology</div>
+            </div>
+
+            <p style={{
+              fontSize: 15,
+              lineHeight: 1.75,
+              color: "#0D1C3A",
+              margin: "0 0 14px",
+            }}>
+              <TypingText text={result.answer} onDone={() => setAnswerDone(true)} />
+            </p>
+
+            {answerDone && (
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                fontSize: 12,
+                color: "#6A7590",
+                fontFamily: "'DM Mono', monospace",
+              }}>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <rect x="1" y="1" width="12" height="12" rx="3" stroke="#A0AABB" strokeWidth="0.8"/>
+                  <path d="M4 7l2 2 4-4" stroke="#2E6BE6" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <a href={result.sourceUrl} style={{ color: "#2E6BE6", textDecoration: "none" }}>{result.source}</a>
+              </div>
+            )}
+          </div>
+
+          {/* Coverage state cards — auto-appears after answer */}
+          {answerDone && (
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ fontSize: 12, fontFamily: "'DM Mono', monospace", color: "#A0AABB", marginBottom: 10, letterSpacing: "0.05em" }}>
+                COVERAGE ACROSS PAYERS
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {result.coverageStates.map(c => (
+                  <CoverageCard key={c.payer} {...c} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Follow-up suggestions */}
+          {answerDone && (
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ fontSize: 12, fontFamily: "'DM Mono', monospace", color: "#A0AABB", marginBottom: 10, letterSpacing: "0.05em" }}>
+                SUGGESTED FOLLOW-UPS
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {result.followUps.map(q => (
+                  <button
+                    key={q}
+                    onClick={() => { setQuery(q); handleSearch(q); }}
+                    style={{
+                      background: "#F7F8FC",
+                      border: "0.5px solid #E8EBF2",
+                      borderRadius: 20,
+                      padding: "7px 14px",
+                      fontSize: 12,
+                      color: "#2E6BE6",
+                      cursor: "pointer",
+                      fontFamily: "'DM Sans', sans-serif",
+                    }}
+                  >{q} →</button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Divider */}
+          {answerDone && (
+            <div style={{ borderTop: "0.5px solid #E8EBF2", margin: "8px 0 24px" }} />
+          )}
+
+          {/* Zone 3 — Policy Links */}
+          {answerDone && (
+            <div>
+              <div style={{ fontSize: 12, fontFamily: "'DM Mono', monospace", color: "#A0AABB", marginBottom: 14, letterSpacing: "0.05em" }}>
+                SOURCE POLICIES — {result.policies.length} DOCUMENTS
+              </div>
+              {result.policies.map((pol, i) => (
+                <div key={i} style={{
+                  background: "#FFFFFF",
+                  border: "0.5px solid #E8EBF2",
+                  borderRadius: 10,
+                  padding: "14px 16px",
+                  marginBottom: 8,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 14,
+                  cursor: "pointer",
+                  transition: "border-color 0.15s",
+                }}
+                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = "#2E6BE6"}
+                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = "#E8EBF2"}
+                >
+                  <div style={{
+                    width: 36, height: 36, borderRadius: 8,
+                    background: "#EBF0FC",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    flexShrink: 0,
+                  }}>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <rect x="2" y="1" width="10" height="13" rx="2" stroke="#2E6BE6" strokeWidth="1"/>
+                      <path d="M5 5h5M5 8h5M5 11h3" stroke="#2E6BE6" strokeWidth="0.8" strokeLinecap="round"/>
+                    </svg>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: "#0D1C3A", marginBottom: 2 }}>{pol.drug}</div>
+                    <div style={{ fontSize: 12, color: "#6A7590", fontFamily: "'DM Mono', monospace" }}>
+                      {pol.payer} · {pol.type} · {pol.date} · {pol.pages}p
+                    </div>
+                  </div>
+                  <div style={{
+                    background: "#F7F8FC",
+                    border: "0.5px solid #E8EBF2",
+                    borderRadius: 6,
+                    padding: "4px 10px",
+                    fontSize: 11,
+                    color: "#6A7590",
+                    fontFamily: "'DM Mono', monospace",
+                    flexShrink: 0,
+                  }}>PDF</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
