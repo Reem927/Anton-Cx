@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 const PAYERS = ["UnitedHealthcare", "Cigna", "BCBS NC", "UPMC", "Priority Health", "EmblemHealth", "Florida Blue"];
 
@@ -76,21 +76,35 @@ function CoverageCard({ payer, status, tier, badge }: { payer: string; status: s
 }
 
 function TypingText({ text, onDone }: { text: string; onDone?: () => void }) {
-  const [displayed, setDisplayed] = useState("");
-  const idx = useRef(0);
+  const [displayed, setDisplayed] = useState(text);
+  const idx = useRef(text.length);
+  const doneRef = useRef(false);
+
   useEffect(() => {
-    setDisplayed("");
+    doneRef.current = false;
     idx.current = 0;
+    setDisplayed("");
+
     const interval = setInterval(() => {
+      if (doneRef.current) {
+        clearInterval(interval);
+        return;
+      }
       idx.current++;
       setDisplayed(text.slice(0, idx.current));
       if (idx.current >= text.length) {
+        doneRef.current = true;
         clearInterval(interval);
         onDone && onDone();
       }
     }, 8);
-    return () => clearInterval(interval);
+
+    return () => {
+      doneRef.current = true;
+      clearInterval(interval);
+    };
   }, [text, onDone]);
+
   return <span>{displayed}</span>;
 }
 
