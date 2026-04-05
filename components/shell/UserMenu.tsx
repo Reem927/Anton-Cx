@@ -2,15 +2,21 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 
 const MOCK_USER = {
-  name:  "Anton Rx",
-  email: "admin@antonrx.com",
+  name:     "Anton Rx",
+  email:    "admin@antonrx.com",
+  role:     "Admin",
   initials: "A",
 };
 
-export function UserMenu() {
+interface Props {
+  expanded: boolean;
+}
+
+export function UserMenu({ expanded }: Props) {
   const [open, setOpen] = useState(false);
   const ref             = useRef<HTMLDivElement>(null);
   const router          = useRouter();
@@ -25,139 +31,186 @@ export function UserMenu() {
 
   return (
     <div ref={ref} style={{ position: "relative" }}>
+      {/* Trigger — mirrors the sidebar profile row */}
       <button
         onClick={() => setOpen(prev => !prev)}
         style={{
-          width:        "28px",
-          height:       "28px",
-          borderRadius: "50%",
-          background:   "#1B3A6B",
-          border:       "none",
-          fontFamily:   "var(--font-syne), Syne, sans-serif",
-          fontSize:     "11px",
-          fontWeight:   700,
-          color:        "#FFFFFF",
-          cursor:       "pointer",
-          flexShrink:   0,
+          display:     "flex",
+          alignItems:  "center",
+          gap:         "10px",
+          width:       "100%",
+          padding:     "10px 12px",
+          border:      "none",
+          background:  open ? "#F0F4FB" : "transparent",
+          cursor:      "pointer",
+          textAlign:   "left",
+          borderRadius:"0",
+          transition:  "background 80ms",
         }}
+        onMouseEnter={e => { if (!open) (e.currentTarget as HTMLElement).style.background = "#F7F8FC"; }}
+        onMouseLeave={e => { if (!open) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
       >
-        {MOCK_USER.initials}
+        <div
+          style={{
+            width:          "32px",
+            height:         "32px",
+            borderRadius:   "50%",
+            background:     "linear-gradient(135deg, #1B3A6B 0%, #2E6BE6 100%)",
+            display:        "flex",
+            alignItems:     "center",
+            justifyContent: "center",
+            flexShrink:     0,
+            fontFamily:     "var(--font-syne), Syne, sans-serif",
+            fontSize:       "12px",
+            fontWeight:     700,
+            color:          "#FFFFFF",
+          }}
+        >
+          {MOCK_USER.initials}
+        </div>
+
+        <AnimatePresence>
+          {expanded && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.12 }}
+              style={{ flex: 1, minWidth: 0, overflow: "hidden" }}
+            >
+              <p style={{
+                fontFamily:   "var(--font-syne), Syne, sans-serif",
+                fontSize:     "12px",
+                fontWeight:   700,
+                color:        "#0D1C3A",
+                margin:       0,
+                whiteSpace:   "nowrap",
+                overflow:     "hidden",
+                textOverflow: "ellipsis",
+              }}>
+                {MOCK_USER.name}
+              </p>
+              <p style={{
+                fontFamily: "var(--font-dm-mono), 'DM Mono', monospace",
+                fontSize:   "9px",
+                color:      "#A0AABB",
+                margin:     0,
+              }}>
+                {MOCK_USER.role}
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </button>
 
+      {/* Dropdown — opens upward */}
       {open && (
         <div
           style={{
             position:    "absolute",
-            top:         "calc(100% + 8px)",
-            right:       0,
+            bottom:      "calc(100% + 8px)",
+            left:        "8px",
+            right:       "8px",
             background:  "#FFFFFF",
             borderWidth: "0.5px",
             borderStyle: "solid",
             borderColor: "#E8EBF2",
-            borderRadius:"10px",
+            borderRadius:"12px",
             padding:     "6px",
-            minWidth:    "220px",
-            boxShadow:   "0 8px 24px rgba(0,0,0,0.10)",
+            minWidth:    "200px",
+            boxShadow:   "0 -4px 20px rgba(0,0,0,0.10)",
             zIndex:      200,
           }}
         >
           {/* User identity */}
-          <div style={{ padding: "8px 10px 10px", borderBottom: "0.5px solid #E8EBF2", marginBottom: "4px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <div
-                style={{
-                  width:        "32px",
-                  height:       "32px",
-                  borderRadius: "50%",
-                  background:   "linear-gradient(135deg, #1B3A6B 0%, #2E6BE6 100%)",
-                  display:      "flex",
-                  alignItems:   "center",
-                  justifyContent: "center",
-                  flexShrink:   0,
-                  fontFamily:   "var(--font-syne), Syne, sans-serif",
-                  fontSize:     "13px",
-                  fontWeight:   700,
-                  color:        "#FFFFFF",
-                }}
-              >
+          <div style={{
+            padding:      "8px 10px 10px",
+            borderBottom: "0.5px solid #E8EBF2",
+            marginBottom: "4px",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "9px" }}>
+              <div style={{
+                width:          "30px",
+                height:         "30px",
+                borderRadius:   "50%",
+                background:     "linear-gradient(135deg, #1B3A6B 0%, #2E6BE6 100%)",
+                display:        "flex",
+                alignItems:     "center",
+                justifyContent: "center",
+                flexShrink:     0,
+                fontFamily:     "var(--font-syne), Syne, sans-serif",
+                fontSize:       "12px",
+                fontWeight:     700,
+                color:          "#FFFFFF",
+              }}>
                 {MOCK_USER.initials}
               </div>
               <div style={{ minWidth: 0 }}>
-                <div
-                  style={{
-                    fontFamily:   "var(--font-dm-sans), 'DM Sans', sans-serif",
-                    fontSize:     "13px",
-                    fontWeight:   600,
-                    color:        "#0D1C3A",
-                    overflow:     "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace:   "nowrap",
-                  }}
-                >
+                <div style={{
+                  fontFamily:   "var(--font-dm-sans), 'DM Sans', sans-serif",
+                  fontSize:     "13px",
+                  fontWeight:   600,
+                  color:        "#0D1C3A",
+                  overflow:     "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace:   "nowrap",
+                }}>
                   {MOCK_USER.name}
                 </div>
-                <div
-                  style={{
-                    fontFamily:   "var(--font-dm-sans), 'DM Sans', sans-serif",
-                    fontSize:     "11px",
-                    color:        "#9AA3BB",
-                    overflow:     "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace:   "nowrap",
-                  }}
-                >
+                <div style={{
+                  fontFamily:   "var(--font-dm-sans), 'DM Sans', sans-serif",
+                  fontSize:     "11px",
+                  color:        "#9AA3BB",
+                  overflow:     "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace:   "nowrap",
+                }}>
                   {MOCK_USER.email}
                 </div>
               </div>
             </div>
           </div>
 
-          <MenuItem
-            label="Account Profile"
-            icon={<ProfileIcon />}
-            href="/settings?section=profile"
-            onClick={() => setOpen(false)}
-          />
-          <MenuItem
-            label="Settings"
-            icon={<SettingsIcon />}
-            href="/settings"
-            onClick={() => setOpen(false)}
-          />
+          <DropdownItem label="Account Profile" href="/settings?section=profile" onClose={() => setOpen(false)}>
+            <ProfileIcon />
+          </DropdownItem>
+          <DropdownItem label="Settings" href="/settings" onClose={() => setOpen(false)}>
+            <SettingsIcon />
+          </DropdownItem>
 
           <div style={{ height: "0.5px", background: "#E8EBF2", margin: "4px 0" }} />
 
-          <MenuItem
+          <DropdownItem
             label="Log out"
-            icon={<LogOutIcon />}
             danger
-            onClick={() => {
-              setOpen(false);
-              router.push("/login");
-            }}
-          />
+            onClose={() => setOpen(false)}
+            onClick={() => router.push("/login")}
+          >
+            <LogOutIcon />
+          </DropdownItem>
         </div>
       )}
     </div>
   );
 }
 
-function MenuItem({
-  label, icon, href, danger, onClick,
+function DropdownItem({
+  label, href, danger, children, onClose, onClick,
 }: {
   label:    string;
-  icon:     React.ReactNode;
   href?:    string;
   danger?:  boolean;
+  children: React.ReactNode;
+  onClose:  () => void;
   onClick?: () => void;
 }) {
-  const style: React.CSSProperties = {
+  const sharedStyle: React.CSSProperties = {
     display:      "flex",
     alignItems:   "center",
     gap:          "9px",
     width:        "100%",
-    padding:      "7px 10px",
-    borderRadius: "6px",
+    padding:      "8px 10px",
+    borderRadius: "7px",
     border:       "none",
     background:   "transparent",
     cursor:       "pointer",
@@ -165,27 +218,24 @@ function MenuItem({
     fontSize:     "13px",
     color:        danger ? "#B02020" : "#0D1C3A",
     textAlign:    "left",
-    textDecoration: "none",
+    textDecoration:"none",
   };
 
   const iconColor = danger ? "#B02020" : "#9AA3BB";
 
   const inner = (
     <>
-      <span style={{ display: "flex", color: iconColor }}>{icon}</span>
+      <span style={{ display: "flex", color: iconColor }}>{children}</span>
       {label}
     </>
   );
 
+  const hoverOn  = (e: React.MouseEvent) => { (e.currentTarget as HTMLElement).style.background = "#F3F5FA"; };
+  const hoverOff = (e: React.MouseEvent) => { (e.currentTarget as HTMLElement).style.background = "transparent"; };
+
   if (href) {
     return (
-      <Link
-        href={href}
-        onClick={onClick}
-        style={style}
-        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#F3F5FA"; }}
-        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
-      >
+      <Link href={href} onClick={onClose} style={sharedStyle} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>
         {inner}
       </Link>
     );
@@ -193,10 +243,10 @@ function MenuItem({
 
   return (
     <button
-      onClick={onClick}
-      style={style}
-      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#F3F5FA"; }}
-      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+      onClick={() => { onClose(); onClick?.(); }}
+      style={sharedStyle}
+      onMouseEnter={hoverOn}
+      onMouseLeave={hoverOff}
     >
       {inner}
     </button>
@@ -205,31 +255,28 @@ function MenuItem({
 
 function ProfileIcon() {
   return (
-    <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-      <circle cx="7.5" cy="5" r="3" stroke="currentColor" strokeWidth="1.2" />
-      <path d="M2 13c0-3 2.5-5 5.5-5s5.5 2 5.5 5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <circle cx="7" cy="4.5" r="2.5" stroke="currentColor" strokeWidth="1.2" />
+      <path d="M1.5 12c0-3 2.5-4.5 5.5-4.5s5.5 1.5 5.5 4.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
     </svg>
   );
 }
 
 function SettingsIcon() {
   return (
-    <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-      <circle cx="7.5" cy="7.5" r="2" stroke="currentColor" strokeWidth="1.2" />
-      <path
-        d="M7.5 1.5v1M7.5 12.5v1M1.5 7.5h1M12.5 7.5h1M3.4 3.4l.7.7M10.9 10.9l.7.7M10.9 3.4l-.7.7M3.4 10.9l.7-.7"
-        stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"
-      />
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <circle cx="7" cy="7" r="2" stroke="currentColor" strokeWidth="1.2" />
+      <path d="M7 1.5v1M7 11.5v1M1.5 7h1M11.5 7h1M3.2 3.2l.7.7M10.1 10.1l.7.7M10.1 3.2l-.7.7M3.2 10.1l.7-.7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
     </svg>
   );
 }
 
 function LogOutIcon() {
   return (
-    <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-      <path d="M6 2H3a1 1 0 00-1 1v9a1 1 0 001 1h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-      <path d="M10 10l3-2.5L10 5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M5.5 7.5h7.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <path d="M5.5 2H3a1 1 0 00-1 1v8a1 1 0 001 1h2.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M9.5 9.5l2.5-2.5L9.5 4.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5.5 7h7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
     </svg>
   );
 }

@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
-import { useRef } from "react";
+import { UserMenu } from "./UserMenu";
 
 const SIDEBAR_KEY = "anton-cx-sidebar";
 
@@ -135,66 +135,8 @@ export function Sidebar({ expanded, onToggle }: SidebarProps) {
         />
       </nav>
 
-      {/* Profile section */}
-      <div
-        className="p-3 flex items-center gap-3"
-        style={{
-          borderTop: "0.5px solid #E8EBF2",
-          cursor: "pointer",
-        }}
-      >
-        <div
-          className="flex-shrink-0 flex items-center justify-center rounded-full"
-          style={{
-            width: "32px",
-            height: "32px",
-            background: "linear-gradient(135deg, #1B3A6B 0%, #2E6BE6 100%)",
-          }}
-        >
-          <span
-            style={{
-              fontFamily: "var(--font-syne), Syne, sans-serif",
-              fontSize: "12px",
-              fontWeight: 700,
-              color: "#FFFFFF",
-            }}
-          >
-            A
-          </span>
-        </div>
-        <AnimatePresence>
-          {expanded && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.12 }}
-              className="flex-1 min-w-0"
-            >
-              <p
-                style={{
-                  fontFamily: "var(--font-syne), Syne, sans-serif",
-                  fontSize: "12px",
-                  fontWeight: 700,
-                  color: "#0D1C3A",
-                  margin: 0,
-                }}
-              >
-                Anton Rx
-              </p>
-              <p
-                style={{
-                  fontFamily: "var(--font-dm-mono), 'DM Mono', monospace",
-                  fontSize: "9px",
-                  color: "#A0AABB",
-                  margin: 0,
-                }}
-              >
-                Admin
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
+      <div style={{ borderTop: "0.5px solid #E8EBF2" }}>
+        <UserMenu expanded={expanded} />
       </div>
     </motion.aside>
   );
