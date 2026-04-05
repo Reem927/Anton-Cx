@@ -29,6 +29,13 @@ yarn-error.log*
 .env
 .env*.local
 
+# supabase
+/supabase/
+
+# api keys / secrets
+*.key
+credentials.json
+
 # vercel
 .vercel
 
