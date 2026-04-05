@@ -5,16 +5,17 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase-browser";
-
-const MOCK_USER = {
-  name:     "Anton Rx",
-  email:    "admin@antonrx.com",
-  role:     "Admin",
-  initials: "A",
-};
+import { useProfile } from "@/lib/profile-context";
 
 interface Props {
   expanded: boolean;
+}
+
+function getInitials(name: string): string {
+  if (!name.trim()) return "?";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0][0].toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
 export function UserMenu({ expanded }: Props) {
@@ -22,6 +23,16 @@ export function UserMenu({ expanded }: Props) {
   const ref             = useRef<HTMLDivElement>(null);
   const router          = useRouter();
   const supabase        = useMemo(() => createClient(), []);
+  const { profile }     = useProfile();
+
+  const displayName = profile?.full_name || "User";
+  const displayEmail = profile?.email || "";
+  const initials = getInitials(displayName);
+  const role = profile?.default_persona === "mfr"
+    ? "Manufacturer"
+    : profile?.default_persona === "plan"
+    ? "Health Plan"
+    : "Analyst";
 
   useEffect(() => {
     function onDown(e: MouseEvent) {
@@ -69,7 +80,7 @@ export function UserMenu({ expanded }: Props) {
             color:          "#FFFFFF",
           }}
         >
-          {MOCK_USER.initials}
+          {initials}
         </div>
 
         <AnimatePresence>
@@ -91,7 +102,7 @@ export function UserMenu({ expanded }: Props) {
                 overflow:     "hidden",
                 textOverflow: "ellipsis",
               }}>
-                {MOCK_USER.name}
+                {displayName}
               </p>
               <p style={{
                 fontFamily: "var(--font-dm-mono), 'DM Mono', monospace",
@@ -99,7 +110,7 @@ export function UserMenu({ expanded }: Props) {
                 color:      "#A0AABB",
                 margin:     0,
               }}>
-                {MOCK_USER.role}
+                {role}
               </p>
             </motion.div>
           )}
@@ -146,7 +157,7 @@ export function UserMenu({ expanded }: Props) {
                 fontWeight:     700,
                 color:          "#FFFFFF",
               }}>
-                {MOCK_USER.initials}
+                {initials}
               </div>
               <div style={{ minWidth: 0 }}>
                 <div style={{
@@ -158,7 +169,7 @@ export function UserMenu({ expanded }: Props) {
                   textOverflow: "ellipsis",
                   whiteSpace:   "nowrap",
                 }}>
-                  {MOCK_USER.name}
+                  {displayName}
                 </div>
                 <div style={{
                   fontFamily:   "var(--font-dm-sans), 'DM Sans', sans-serif",
@@ -168,7 +179,7 @@ export function UserMenu({ expanded }: Props) {
                   textOverflow: "ellipsis",
                   whiteSpace:   "nowrap",
                 }}>
-                  {MOCK_USER.email}
+                  {displayEmail}
                 </div>
               </div>
             </div>

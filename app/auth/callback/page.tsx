@@ -9,8 +9,6 @@ export default function AuthCallbackPage() {
   const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
-    // Supabase automatically picks up the token from the URL hash/query
-    // and exchanges it for a session when we call getSession
     const handleCallback = async () => {
       const { error } = await supabase.auth.getSession();
 
@@ -19,7 +17,15 @@ export default function AuthCallbackPage() {
         return;
       }
 
-      // Small delay to ensure cookies are set before redirect
+      // Ensure profile exists (trigger handles most cases, this is the fallback
+      // for Google OAuth or pre-trigger users). The GET /api/profile route
+      // auto-creates a profile row if one doesn't exist.
+      try {
+        await fetch("/api/profile");
+      } catch {
+        // Non-blocking — profile will be created on next page load
+      }
+
       router.replace("/dashboard");
       router.refresh();
     };

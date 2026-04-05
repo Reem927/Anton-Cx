@@ -3,16 +3,9 @@
 import { Suspense, useState, useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePersona } from "@/lib/persona-context";
+import { useProfile } from "@/lib/profile-context";
 import { createClient } from "@/lib/supabase-browser";
 import type { Persona } from "@/lib/types";
-
-const MOCK_USER = {
-  name:         "Anton Rx",
-  email:        "admin@antonrx.com",
-  organization: "Anton Rx LLC",
-  role:         "Admin",
-  joined:       "January 2025",
-};
 
 const SECTIONS = [
   { id: "profile",  label: "Account Profile" },
@@ -42,19 +35,52 @@ function SettingsPageContent() {
   const initialSection            = (searchParams.get("section") as SectionId | null) ?? "profile";
   const [section, setSection]     = useState<SectionId>(initialSection);
   const { persona, setPersona }   = usePersona();
+  const { profile, loading, updateProfile } = useProfile();
   const supabase                  = useMemo(() => createClient(), []);
 
-  const [name,  setName]  = useState(MOCK_USER.name);
-  const [org,   setOrg]   = useState(MOCK_USER.organization);
+  const [name,  setName]  = useState("");
+  const [org,   setOrg]   = useState("");
   const [saved, setSaved] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  // Sync local state when profile loads
+  useEffect(() => {
+    if (profile) {
+      setName(profile.full_name || "");
+      setOrg(profile.organization || "");
+    }
+  }, [profile]);
 
   useEffect(() => {
     setSection(initialSection);
   }, [initialSection]);
 
-  function save(sectionId: string) {
-    setSaved(sectionId);
-    setTimeout(() => setSaved(null), 2000);
+  async function saveProfile() {
+    setSaving(true);
+    const success = await updateProfile({ full_name: name.trim(), organization: org.trim() });
+    setSaving(false);
+    if (success) {
+      setSaved("profile");
+      setTimeout(() => setSaved(null), 2000);
+    }
+  }
+
+  async function savePersona() {
+    setSaving(true);
+    const success = await updateProfile({ default_persona: persona });
+    setSaving(false);
+    if (success) {
+      setSaved("account");
+      setTimeout(() => setSaved(null), 2000);
+    }
+  }
+
+  const memberSince = profile?.created_at
+    ? new Date(profile.created_at).toLocaleDateString("en-US", { month: "long", year: "numeric" })
+    : "—";
+
+  if (loading) {
+    return <div style={{ padding: 40, color: "#6A7590" }}>Loading settings...</div>;
   }
 
   return (
@@ -145,14 +171,15 @@ function SettingsPageContent() {
             <SettingsCard
               title="Account Profile"
               subtitle="Your name, organization, and account details."
-              onSave={() => save("profile")}
+              onSave={saveProfile}
               saved={saved === "profile"}
+              saving={saving}
             >
               <FieldRow label="Display name">
                 <TextInput value={name} onChange={setName} />
               </FieldRow>
               <FieldRow label="Email address">
-                <TextInput value={MOCK_USER.email} disabled />
+                <TextInput value={profile?.email || ""} disabled />
               </FieldRow>
               <FieldRow label="Organization">
                 <TextInput value={org} onChange={setOrg} />
@@ -171,7 +198,11 @@ function SettingsPageContent() {
                     padding:      "5px 10px",
                   }}
                 >
-                  {MOCK_USER.role}
+                  {profile?.default_persona === "mfr"
+                    ? "Manufacturer"
+                    : profile?.default_persona === "plan"
+                    ? "Health Plan"
+                    : "Analyst"}
                 </span>
               </FieldRow>
             </SettingsCard>
@@ -180,8 +211,9 @@ function SettingsPageContent() {
           {section === "account" && (
             <SettingsCard
               title="Settings"
-              onSave={() => save("account")}
+              onSave={savePersona}
               saved={saved === "account"}
+              saving={saving}
             >
               <FieldRow label="Default persona">
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px", flex: 1 }}>
@@ -244,7 +276,7 @@ function SettingsPageContent() {
                     color:      "#9AA3BB",
                   }}
                 >
-                  {MOCK_USER.joined}
+                  {memberSince}
                 </span>
               </FieldRow>
             </SettingsCard>
@@ -252,7 +284,7 @@ function SettingsPageContent() {
 
           {section === "security" && (
             <>
-              <SettingsCard title="Password" onSave={() => save("password")} saved={saved === "password"} saveLabel="Update password">
+              <SettingsCard title="Password" onSave={() => { setSaved("password"); setTimeout(() => setSaved(null), 2000); }} saved={saved === "password"} saveLabel="Update password">
                 <FieldRow label="Current password">
                   <TextInput value="" onChange={() => {}} type="password" placeholder="Enter current password" />
                 </FieldRow>
@@ -338,13 +370,14 @@ function SettingsPageContent() {
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function SettingsCard({
-  title, subtitle, children, onSave, saved, saveLabel, hideSave, style: extraStyle,
+  title, subtitle, children, onSave, saved, saving, saveLabel, hideSave, style: extraStyle,
 }: {
   title:      string;
   subtitle?:  string;
   children:   React.ReactNode;
   onSave?:    () => void;
   saved?:     boolean;
+  saving?:    boolean;
   saveLabel?: string;
   hideSave?:  boolean;
   style?:     React.CSSProperties;
@@ -422,22 +455,23 @@ function SettingsCard({
           )}
           <button
             onClick={onSave}
+            disabled={saving}
             style={{
               fontFamily:   "var(--font-dm-sans), 'DM Sans', sans-serif",
               fontSize:     "13px",
               fontWeight:   500,
               color:        "#FFFFFF",
-              background:   "#2E6BE6",
+              background:   saving ? "#C4D4F8" : "#2E6BE6",
               border:       "none",
               borderRadius: "7px",
               padding:      "7px 16px",
-              cursor:       "pointer",
+              cursor:       saving ? "not-allowed" : "pointer",
               transition:   "background 100ms",
             }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#1B5ACC"; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#2E6BE6"; }}
+            onMouseEnter={e => { if (!saving) (e.currentTarget as HTMLElement).style.background = "#1B5ACC"; }}
+            onMouseLeave={e => { if (!saving) (e.currentTarget as HTMLElement).style.background = "#2E6BE6"; }}
           >
-            {saveLabel ?? "Save changes"}
+            {saving ? "Saving..." : (saveLabel ?? "Save changes")}
           </button>
         </div>
       )}
