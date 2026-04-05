@@ -1,17 +1,11 @@
-// Note: To enable AI-powered summaries, add a credit card to your Vercel account
-// Visit: https://vercel.com/~/ai to set up the AI Gateway
-// Once configured, uncomment the generateText import and AI logic below
-
-// import { generateText } from 'ai'
-
 interface ComparisonItem {
   company: string
   coverage: string
   tier: number
   dosage: string
-  quantity: number
-  price: number
-  copay: number
+  quantity: number | null
+  price: number | null
+  copay: number | null
 
   drugName?: string
   genericName?: string
@@ -20,8 +14,8 @@ interface ComparisonItem {
   policyType?: string
   coverageState?: string
   formularyAccessStatus?: string
-  preferredRank?: number
-  totalDrugsOnTier?: number
+  preferredRank?: number | null
+  totalDrugsOnTier?: number | null
   positionLabel?: string
   competingDrugs?: string[]
   rebateImplication?: string
@@ -31,174 +25,69 @@ function money(value: number) {
   return `$${value.toFixed(2)}`
 }
 
-function average(values: number[]) {
-  if (!values.length) return 0
-  return values.reduce((sum, value) => sum + value, 0) / values.length
-}
-
 function generateAnalysisSummary(drugName: string, comparisonData: ComparisonItem[]): string {
   if (!comparisonData.length) {
     return `No comparison data was provided for ${drugName}.`
   }
 
-  const sortedByCopay = [...comparisonData].sort((a, b) => a.copay - b.copay)
-  const sortedByPrice = [...comparisonData].sort((a, b) => a.price - b.price)
+  const withCopay = comparisonData.filter((c) => c.copay != null) as Array<ComparisonItem & { copay: number }>
+  const withPrice = comparisonData.filter((c) => c.price != null) as Array<ComparisonItem & { price: number }>
 
-  const lowestCopay = sortedByCopay[0]
-  const lowestPrice = sortedByPrice[0]
+  const lowestCopay = withCopay.length ? [...withCopay].sort((a, b) => a.copay - b.copay)[0] : null
+  const lowestPrice = withPrice.length ? [...withPrice].sort((a, b) => a.price - b.price)[0] : null
 
-  const coveredCompanies = comparisonData.filter((c) => c.coverage === "Covered")
-  const priorAuthCompanies = comparisonData.filter((c) => c.coverage === "Prior Auth")
-  const stepTherapyCompanies = comparisonData.filter((c) => c.coverage === "Step Therapy")
-  const notCoveredCompanies = comparisonData.filter((c) => c.coverage === "Not Covered")
-
-  const priceValues = comparisonData.map((c) => c.price)
-  const copayValues = comparisonData.map((c) => c.copay)
-
-  const priceRange = {
-    min: Math.min(...priceValues),
-    max: Math.max(...priceValues),
-  }
-
-  const copayRange = {
-    min: Math.min(...copayValues),
-    max: Math.max(...copayValues),
-  }
-
-  const avgPrice = average(priceValues)
-  const avgCopay = average(copayValues)
-
-  const bestCoveredOption =
-    coveredCompanies.length > 0
-      ? coveredCompanies.reduce((best, curr) => (curr.copay < best.copay ? curr : best))
-      : lowestCopay
-
-  const accessStates = Array.from(
-    new Set(
-      comparisonData
-        .map((item) => item.coverageState)
-        .filter((value): value is string => Boolean(value))
-    )
-  )
-
-  const accessStatuses = Array.from(
-    new Set(
-      comparisonData
-        .map((item) => item.formularyAccessStatus)
-        .filter((value): value is string => Boolean(value))
-    )
-  )
-
-  const bestRanked = [...comparisonData]
-    .filter(
-      (item) =>
-        typeof item.preferredRank === "number" &&
-        typeof item.totalDrugsOnTier === "number"
-    )
-    .sort((a, b) => {
-      const aRank = a.preferredRank ?? 999
-      const bRank = b.preferredRank ?? 999
-
-      if (aRank !== bRank) return aRank - bRank
-
-      const aTotal = a.totalDrugsOnTier ?? 999
-      const bTotal = b.totalDrugsOnTier ?? 999
-      return aTotal - bTotal
-    })[0]
-
-  const policyTypes = Array.from(
-    new Set(
-      comparisonData
-        .map((item) => item.policyType)
-        .filter((value): value is string => Boolean(value))
-    )
-  )
-
-  const planTypes = Array.from(
-    new Set(
-      comparisonData
-        .map((item) => item.planType)
-        .filter((value): value is string => Boolean(value))
-    )
-  )
+  const covered = comparisonData.filter((c) => c.coverageState === "Covered")
+  const notCovered = comparisonData.filter((c) => c.coverageState === "Not Covered")
+  const noPolicy = comparisonData.filter((c) => c.coverageState === "No Policy Found")
+  const pharmacyOnly = comparisonData.filter((c) => c.coverageState === "Pharmacy Only")
 
   let summary = `Comparison Summary for ${drugName}\n\n`
 
-  const firstItem = comparisonData[0]
-  if (firstItem.drugName || firstItem.genericName || firstItem.drugCategory) {
+  const first = comparisonData[0]
+  if (first.drugName || first.genericName || first.drugCategory) {
     summary += `Drug Overview:\n`
-    summary += `• Brand / Generic: ${firstItem.drugName || drugName}${
-      firstItem.genericName ? ` / ${firstItem.genericName}` : ""
-    }\n`
-    if (firstItem.drugCategory) {
-      summary += `• Category: ${firstItem.drugCategory}\n`
-    }
-    if (planTypes.length) {
-      summary += `• Plan Types Compared: ${planTypes.join(", ")}\n`
-    }
-    if (policyTypes.length) {
-      summary += `• Policy Types Compared: ${policyTypes.join(", ")}\n`
-    }
+    summary += `• Brand / Generic: ${first.drugName || drugName}${first.genericName ? ` / ${first.genericName}` : ""}\n`
+    if (first.drugCategory) summary += `• Category: ${first.drugCategory}\n`
     summary += `\n`
   }
 
-  summary += `Best Value:\n`
-  summary += `• Lowest Copay: ${lowestCopay.company} at ${money(lowestCopay.copay)}`
-  summary += typeof lowestCopay.tier === "number" ? ` (Tier ${lowestCopay.tier})` : ""
-  summary += `\n`
-  summary += `• Lowest Price: ${lowestPrice.company} at ${money(lowestPrice.price)}\n`
-  summary += `• Best Covered Option: ${bestCoveredOption.company} with ${bestCoveredOption.coverage} status and ${money(bestCoveredOption.copay)} copay\n\n`
-
-  summary += `Coverage Analysis:\n`
-  if (coveredCompanies.length > 0) {
-    summary += `• Covered: ${coveredCompanies.map((c) => c.company).join(", ")}\n`
-  }
-  if (priorAuthCompanies.length > 0) {
-    summary += `• Prior Authorization Required: ${priorAuthCompanies.map((c) => c.company).join(", ")}\n`
-  }
-  if (stepTherapyCompanies.length > 0) {
-    summary += `• Step Therapy Required: ${stepTherapyCompanies.map((c) => c.company).join(", ")}\n`
-  }
-  if (notCoveredCompanies.length > 0) {
-    summary += `• Not Covered: ${notCoveredCompanies.map((c) => c.company).join(", ")}\n`
-  }
-  if (accessStates.length > 0) {
-    summary += `• Coverage States Seen: ${accessStates.join(", ")}\n`
-  }
-  if (accessStatuses.length > 0) {
-    summary += `• Access Statuses Seen: ${accessStatuses.join(", ")}\n`
-  }
+  summary += `Coverage State:\n`
+  if (covered.length) summary += `• Covered: ${covered.map((c) => c.company).join(", ")}\n`
+  if (notCovered.length) summary += `• Not Covered: ${notCovered.map((c) => c.company).join(", ")}\n`
+  if (noPolicy.length) summary += `• No Policy Found: ${noPolicy.map((c) => c.company).join(", ")}\n`
+  if (pharmacyOnly.length) summary += `• Pharmacy Only: ${pharmacyOnly.map((c) => c.company).join(", ")}\n`
   summary += `\n`
 
-  summary += `Cost Comparison:\n`
-  summary += `• Price Range: ${money(priceRange.min)} - ${money(priceRange.max)} (Avg: ${money(avgPrice)})\n`
-  summary += `• Copay Range: ${money(copayRange.min)} - ${money(copayRange.max)} (Avg: ${money(avgCopay)})\n`
-  summary += `• Potential Copay Savings: ${money(copayRange.max - copayRange.min)} per fill\n\n`
-
-  if (bestRanked) {
-    summary += `Ranking & Rebate Position:\n`
-    summary += `• Best Ranking Position: ${bestRanked.company} at ${bestRanked.positionLabel || `Rank ${bestRanked.preferredRank} of ${bestRanked.totalDrugsOnTier}`}\n`
-    if (bestRanked.competingDrugs && bestRanked.competingDrugs.length > 0) {
-      summary += `• Main Competitors on Tier: ${bestRanked.competingDrugs.join(", ")}\n`
-    }
-    if (bestRanked.rebateImplication) {
-      summary += `• Rebate Implication: ${bestRanked.rebateImplication}\n`
-    }
+  if (lowestCopay || lowestPrice) {
+    summary += `Cost Highlights:\n`
+    if (lowestCopay) summary += `• Lowest Copay: ${lowestCopay.company} at ${money(lowestCopay.copay)}\n`
+    if (lowestPrice) summary += `• Lowest Price: ${lowestPrice.company} at ${money(lowestPrice.price)}\n`
     summary += `\n`
   }
+
+  const ranked = comparisonData.filter((c) => c.positionLabel && c.positionLabel !== "N/A")
+  if (ranked.length) {
+    summary += `Ranking / Rebate:\n`
+    ranked.slice(0, 3).forEach((item) => {
+      summary += `• ${item.company}: ${item.positionLabel}`
+      if (item.rebateImplication) summary += ` — ${item.rebateImplication}`
+      summary += `\n`
+    })
+    summary += `\n`
+  }
+
+  const recommended =
+    covered.find((c) => c.copay != null) ??
+    covered[0] ??
+    pharmacyOnly[0] ??
+    comparisonData[0]
 
   summary += `Recommendation:\n`
-  summary += `• ${bestCoveredOption.company} offers the strongest overall value based on coverage and member cost`
-  if (bestCoveredOption.formularyAccessStatus) {
-    summary += `, with ${bestCoveredOption.formularyAccessStatus.toLowerCase()} access status`
-  }
-  if (bestCoveredOption.positionLabel) {
-    summary += ` and ranking position ${bestCoveredOption.positionLabel}`
-  }
-  summary += `.\n`
-
-  if (priorAuthCompanies.length > 0 || stepTherapyCompanies.length > 0) {
-    summary += `• Some payers require additional utilization management steps, which may delay access or increase administrative burden.\n`
+  summary += `• ${recommended.company} is the strongest current option based on available policy data.`
+  if (recommended.coverageState) summary += ` Coverage state: ${recommended.coverageState}.`
+  if (recommended.formularyAccessStatus) summary += ` Access status: ${recommended.formularyAccessStatus}.`
+  if (recommended.positionLabel && recommended.positionLabel !== "N/A") {
+    summary += ` Ranking: ${recommended.positionLabel}.`
   }
 
   return summary
@@ -209,20 +98,13 @@ export async function POST(req: Request) {
     const { drugName, comparisonData } = await req.json()
 
     if (!drugName || !Array.isArray(comparisonData)) {
-      return Response.json(
-        { error: "Invalid request body." },
-        { status: 400 }
-      )
+      return Response.json({ error: "Invalid request body." }, { status: 400 })
     }
 
     const summary = generateAnalysisSummary(drugName, comparisonData)
-
     return Response.json({ summary })
   } catch (error) {
     console.error(error)
-    return Response.json(
-      { error: "Failed to generate summary." },
-      { status: 500 }
-    )
+    return Response.json({ error: "Failed to generate summary." }, { status: 500 })
   }
 }

@@ -79,14 +79,31 @@ export function DrugComparison() {
     setAiSummary(null);
     setSummaryError(null);
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const response = await fetch("/api/compare-engine", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          drugName,
+          companies,
+          searchAllCompanies,
+        }),
+      });
 
-    const mockResults: ComparisonResult[] = generateMockResults(
-      drugName,
-      searchAllCompanies ? undefined : companies
-    );
-    setSearchResults(mockResults);
-    setIsLoading(false);
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "Failed to load comparison results.");
+      }
+
+      const data = await response.json();
+      setSearchResults(data.results ?? []);
+    } catch (error) {
+      console.error(error);
+      setSearchResults([]);
+      setSummaryError(error instanceof Error ? error.message : "Failed to load comparison results.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -100,13 +117,10 @@ export function DrugComparison() {
   };
 
   const toggleSplitSelection = (id: string) => {
-    const newSelected = new Set(selectedForSplit);
-    if (newSelected.has(id)) {
-      newSelected.delete(id);
-    } else {
-      newSelected.add(id);
-    }
-    setSelectedForSplit(newSelected);
+    const next = new Set(selectedForSplit);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedForSplit(next);
     setAiSummary(null);
     setSummaryError(null);
   };
@@ -126,38 +140,15 @@ export function DrugComparison() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           drugName,
-          comparisonData: splitViewData.map((item) => ({
-            company: item.company,
-            coverage: item.coverage,
-            tier: item.tier,
-            dosage: item.dosage,
-            quantity: item.quantity,
-            price: item.price,
-            copay: item.copay,
-            drugName: item.drugName,
-            genericName: item.genericName,
-            drugCategory: item.drugCategory,
-            planType: item.planType,
-            policyType: item.policyType,
-            coverageState: item.coverageState,
-            formularyAccessStatus: item.formularyAccessStatus,
-            preferredRank: item.preferredRank,
-            totalDrugsOnTier: item.totalDrugsOnTier,
-            positionLabel: item.positionLabel,
-            competingDrugs: item.competingDrugs,
-            rebateImplication: item.rebateImplication,
-          })),
+          comparisonData: splitViewData,
         }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to generate summary");
-      }
-
+      if (!response.ok) throw new Error("Failed to generate summary");
       const data = await response.json();
       setAiSummary(data.summary);
     } catch (error) {
-      console.error("Error generating AI summary:", error);
+      console.error(error);
       setSummaryError("Unable to generate AI summary. Please try again.");
     } finally {
       setIsGeneratingSummary(false);
@@ -177,18 +168,18 @@ export function DrugComparison() {
         policyType: row.policyType,
         coverageState: row.coverageState,
         formularyAccessStatus: row.formularyAccessStatus,
-        preferredRank: row.preferredRank,
-        totalDrugsOnTier: row.totalDrugsOnTier,
+        preferredRank: row.preferredRank ?? "",
+        totalDrugsOnTier: row.totalDrugsOnTier ?? "",
         positionLabel: row.positionLabel,
         competingDrugs: row.competingDrugs.join("; "),
         rebateImplication: row.rebateImplication,
         coverage: row.coverage,
         tier: row.tier,
         dosage: row.dosage,
-        quantity: row.quantity,
-        price: row.price,
-        copay: row.copay,
-        effectiveDate: row.effectiveDate,
+        quantity: row.quantity ?? "",
+        price: row.price ?? "",
+        copay: row.copay ?? "",
+        effectiveDate: row.effectiveDate ?? "",
         policyName: row.policyName,
         policySummary: row.policySummary,
       }))
@@ -223,7 +214,7 @@ export function DrugComparison() {
           `Ranking: ${row.positionLabel}`,
           `Competing Drugs: ${row.competingDrugs.length ? row.competingDrugs.join(", ") : "None listed"}`,
           `Rebate Implication: ${row.rebateImplication}`,
-          `Price: $${row.price.toFixed(2)} | Copay: $${row.copay.toFixed(2)}`,
+          `Price: ${row.price != null ? `$${row.price.toFixed(2)}` : "N/A"} | Copay: ${row.copay != null ? `$${row.copay.toFixed(2)}` : "N/A"}`,
           `Policy: ${row.policyName}`,
           `Summary: ${row.policySummary}`,
           ``,
@@ -262,26 +253,13 @@ export function DrugComparison() {
           <head>
             <title>Drug Policy Comparison PDF</title>
             <style>
-              body {
-                margin: 0;
-                padding: 24px;
-                font-family: Arial, sans-serif;
-                background: white;
-              }
-              img {
-                width: 100%;
-                height: auto;
-                display: block;
-              }
+              body { margin: 0; padding: 24px; font-family: Arial, sans-serif; background: white; }
+              img { width: 100%; height: auto; display: block; }
             </style>
           </head>
           <body>
             <img src="${imageData}" />
-            <script>
-              window.onload = function () {
-                window.print();
-              };
-            </script>
+            <script>window.onload = function () { window.print(); };</script>
           </body>
         </html>
       `);
@@ -300,7 +278,7 @@ export function DrugComparison() {
           Drug Policy Comparison
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Compare drug coverage policies across healthcare organizations
+          Compare real ingested policy results across healthcare organizations
         </p>
       </div>
 
@@ -308,7 +286,7 @@ export function DrugComparison() {
         <CardHeader className="pb-4">
           <CardTitle className="text-lg">Search Policies</CardTitle>
           <CardDescription>
-            Enter a drug name and select companies to compare, or search all companies at once
+            Search ingested medical and pharmacy policies for a drug and compare payer coverage.
           </CardDescription>
         </CardHeader>
 
@@ -319,7 +297,7 @@ export function DrugComparison() {
             </Label>
             <Input
               id="drug-name"
-              placeholder="Enter drug name (e.g., Humira, Amjevita, Keytruda)"
+              placeholder="Enter brand or generic drug name"
               value={drugName}
               onChange={(e) => setDrugName(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -332,7 +310,7 @@ export function DrugComparison() {
               <div className="mb-2 flex items-center gap-2">
                 <FileText className="h-4 w-4 text-primary" />
                 <span className="text-sm font-semibold text-foreground">
-                  Biosimilar / Biologic Context
+                  Drug Context
                 </span>
               </div>
               <div className="grid gap-3 md:grid-cols-2 text-sm">
@@ -358,18 +336,6 @@ export function DrugComparison() {
                     {selectedDrugMeta.therapeuticArea}
                   </p>
                 </div>
-                <div className="md:col-span-2">
-                  <p className="text-muted-foreground">Related Products</p>
-                  <p className="font-medium text-foreground">
-                    {selectedDrugMeta.relatedProducts.length
-                      ? selectedDrugMeta.relatedProducts.join(", ")
-                      : "No mapped related products"}
-                  </p>
-                </div>
-                <div className="md:col-span-2">
-                  <p className="text-muted-foreground">Policy Hint</p>
-                  <p className="text-foreground/90">{selectedDrugMeta.policyGroupingHint}</p>
-                </div>
               </div>
             </div>
           ) : null}
@@ -382,10 +348,10 @@ export function DrugComparison() {
             />
             <div className="flex-1">
               <Label htmlFor="all-companies" className="cursor-pointer text-sm font-medium">
-                Search All Companies
+                Search All Available Payers
               </Label>
               <p className="text-xs text-muted-foreground">
-                Compare policies from all available healthcare organizations
+                Pull all ingested payer records for this drug from Supabase.
               </p>
             </div>
             <Building2 className="h-5 w-5 text-muted-foreground" />
@@ -393,10 +359,10 @@ export function DrugComparison() {
 
           {!searchAllCompanies && (
             <div className="space-y-3">
-              <Label className="text-sm font-medium">Select Companies</Label>
+              <Label className="text-sm font-medium">Select Payers</Label>
               <div className="flex gap-2">
                 <Input
-                  placeholder="Add company name (e.g., Aetna, Cigna)"
+                  placeholder="Add payer name (e.g., Aetna, Cigna)"
                   value={companyInput}
                   onChange={(e) => setCompanyInput(e.target.value)}
                   onKeyDown={handleKeyDown}
@@ -431,12 +397,6 @@ export function DrugComparison() {
                   ))}
                 </div>
               )}
-
-              {companies.length === 0 && (
-                <p className="text-xs text-muted-foreground">
-                  Add at least one company to compare, or enable &quot;Search All Companies&quot;
-                </p>
-              )}
             </div>
           )}
 
@@ -448,7 +408,7 @@ export function DrugComparison() {
             {isLoading ? (
               <>
                 <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                Analyzing Policies...
+                Loading Policies...
               </>
             ) : (
               <>
@@ -460,6 +420,12 @@ export function DrugComparison() {
         </CardContent>
       </Card>
 
+      {summaryError && !searchResults && (
+        <Card className="border-destructive/20 bg-destructive/5">
+          <CardContent className="p-4 text-sm text-destructive">{summaryError}</CardContent>
+        </Card>
+      )}
+
       {searchResults && (
         <div ref={exportRef} className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -468,7 +434,7 @@ export function DrugComparison() {
                 Results for &quot;{drugName}&quot;
               </h2>
               <p className="text-sm text-muted-foreground">
-                {searchResults.length} policies found
+                {searchResults.length} payer result{searchResults.length === 1 ? "" : "s"} found
               </p>
             </div>
 
@@ -548,8 +514,7 @@ export function DrugComparison() {
                   <div className="flex-1">
                     <p className="text-sm font-medium text-foreground">Split View Mode</p>
                     <p className="text-xs text-muted-foreground">
-                      Select companies from the table below to add them to the split comparison.
-                      Click on a row to select or deselect it.
+                      Select rows in the comparison table to compare them side by side.
                     </p>
                   </div>
                   {selectedForSplit.size > 0 && (
@@ -690,9 +655,7 @@ export function DrugComparison() {
                             <td className="p-3 text-muted-foreground">Coverage State</td>
                             {splitViewData.map((item) => (
                               <td key={`cs-${item.id}`} className="p-3">
-                                <Badge variant="outline" className={getCoverageStateBadgeClass(item.coverageState)}>
-                                  {item.coverageState}
-                                </Badge>
+                                <Badge variant="outline">{item.coverageState}</Badge>
                               </td>
                             ))}
                           </tr>
@@ -701,29 +664,16 @@ export function DrugComparison() {
                             <td className="p-3 text-muted-foreground">Prior Authorization</td>
                             {splitViewData.map((item) => (
                               <td key={`pa-${item.id}`} className="p-3">
-                                {item.coverageState === "Pharmacy Only" || item.coverageState === "No Policy Found" ? (
-                                  <span className="text-muted-foreground">Skipped</span>
+                                {item.coverageCriteria.priorAuthRequired ? (
+                                  <div className="flex items-center gap-2">
+                                    <AlertCircle className="h-4 w-4 text-amber-500" />
+                                    <span className="text-amber-700">Required</span>
+                                  </div>
                                 ) : (
-                                  <>
-                                    <div className="flex items-center gap-2">
-                                      {item.coverageCriteria.priorAuthRequired ? (
-                                        <>
-                                          <AlertCircle className="h-4 w-4 text-amber-500" />
-                                          <span className="text-amber-700">Required</span>
-                                        </>
-                                      ) : (
-                                        <>
-                                          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                                          <span className="text-emerald-700">Not Required</span>
-                                        </>
-                                      )}
-                                    </div>
-                                    {item.coverageCriteria.priorAuthDetails && (
-                                      <p className="text-xs text-muted-foreground mt-1">
-                                        {item.coverageCriteria.priorAuthDetails}
-                                      </p>
-                                    )}
-                                  </>
+                                  <div className="flex items-center gap-2">
+                                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                                    <span className="text-emerald-700">Not Required</span>
+                                  </div>
                                 )}
                               </td>
                             ))}
@@ -733,123 +683,15 @@ export function DrugComparison() {
                             <td className="p-3 text-muted-foreground">Step Therapy</td>
                             {splitViewData.map((item) => (
                               <td key={`st-${item.id}`} className="p-3">
-                                {item.coverageState === "Pharmacy Only" || item.coverageState === "No Policy Found" ? (
-                                  <span className="text-muted-foreground">Skipped</span>
-                                ) : (
-                                  <>
-                                    <div className="flex items-center gap-2">
-                                      {item.coverageCriteria.stepTherapyRequired ? (
-                                        <>
-                                          <AlertCircle className="h-4 w-4 text-amber-500" />
-                                          <span className="text-amber-700">Required</span>
-                                        </>
-                                      ) : (
-                                        <>
-                                          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                                          <span className="text-emerald-700">Not Required</span>
-                                        </>
-                                      )}
-                                    </div>
-                                    {item.coverageCriteria.stepTherapyDetails && (
-                                      <p className="text-xs text-muted-foreground mt-1">
-                                        {item.coverageCriteria.stepTherapyDetails}
-                                      </p>
-                                    )}
-                                  </>
-                                )}
-                              </td>
-                            ))}
-                          </tr>
-
-                          <tr className="border-b border-border hover:bg-secondary/20">
-                            <td className="p-3 text-muted-foreground">Quantity Limit</td>
-                            {splitViewData.map((item) => (
-                              <td key={`ql-${item.id}`} className="p-3 font-medium">
-                                {item.coverageState === "Pharmacy Only" || item.coverageState === "No Policy Found" ? (
-                                  <span className="text-muted-foreground">Skipped</span>
-                                ) : (
-                                  item.coverageCriteria.quantityLimit
-                                )}
-                              </td>
-                            ))}
-                          </tr>
-
-                          <tr className="border-b border-border hover:bg-secondary/20">
-                            <td className="p-3 text-muted-foreground">Age Restriction</td>
-                            {splitViewData.map((item) => (
-                              <td key={`ar-${item.id}`} className="p-3">
-                                {item.coverageState === "Pharmacy Only" || item.coverageState === "No Policy Found" ? (
-                                  <span className="text-muted-foreground">Skipped</span>
-                                ) : item.coverageCriteria.ageRestriction ? (
-                                  <span className="text-foreground">{item.coverageCriteria.ageRestriction}</span>
-                                ) : (
-                                  <span className="text-muted-foreground">None</span>
-                                )}
-                              </td>
-                            ))}
-                          </tr>
-
-                          <tr className="border-b border-border hover:bg-secondary/20">
-                            <td className="p-3 text-muted-foreground">Diagnosis Requirement</td>
-                            {splitViewData.map((item) => (
-                              <td key={`dr-${item.id}`} className="p-3">
-                                {item.coverageState === "Pharmacy Only" || item.coverageState === "No Policy Found" ? (
-                                  <span className="text-muted-foreground">Skipped</span>
-                                ) : item.coverageCriteria.diagnosisRequired ? (
-                                  <span className="text-foreground text-xs">
-                                    {item.coverageCriteria.diagnosisRequired}
-                                  </span>
-                                ) : (
-                                  <span className="text-muted-foreground">Any approved indication</span>
-                                )}
-                              </td>
-                            ))}
-                          </tr>
-
-                          <tr className="border-b border-border hover:bg-secondary/20">
-                            <td className="p-3 text-muted-foreground">Specialty Pharmacy</td>
-                            {splitViewData.map((item) => (
-                              <td key={`sp-${item.id}`} className="p-3">
-                                {item.coverageState === "Pharmacy Only" || item.coverageState === "No Policy Found" ? (
-                                  <span className="text-muted-foreground">Skipped</span>
-                                ) : (
+                                {item.coverageCriteria.stepTherapyRequired ? (
                                   <div className="flex items-center gap-2">
-                                    {item.coverageCriteria.specialtyPharmacyRequired ? (
-                                      <>
-                                        <AlertCircle className="h-4 w-4 text-blue-500" />
-                                        <span className="text-blue-700">Required</span>
-                                      </>
-                                    ) : (
-                                      <>
-                                        <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                                        <span className="text-emerald-700">Not Required</span>
-                                      </>
-                                    )}
+                                    <AlertCircle className="h-4 w-4 text-amber-500" />
+                                    <span className="text-amber-700">Required</span>
                                   </div>
-                                )}
-                              </td>
-                            ))}
-                          </tr>
-
-                          <tr className="border-b border-border hover:bg-secondary/20">
-                            <td className="p-3 text-muted-foreground">Mail Order Available</td>
-                            {splitViewData.map((item) => (
-                              <td key={`mo-${item.id}`} className="p-3">
-                                {item.coverageState === "Pharmacy Only" || item.coverageState === "No Policy Found" ? (
-                                  <span className="text-muted-foreground">Skipped</span>
                                 ) : (
                                   <div className="flex items-center gap-2">
-                                    {item.coverageCriteria.mailOrderAvailable ? (
-                                      <>
-                                        <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                                        <span className="text-emerald-700">Available</span>
-                                      </>
-                                    ) : (
-                                      <>
-                                        <XCircle className="h-4 w-4 text-red-500" />
-                                        <span className="text-red-700">Not Available</span>
-                                      </>
-                                    )}
+                                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                                    <span className="text-emerald-700">Not Required</span>
                                   </div>
                                 )}
                               </td>
@@ -857,20 +699,10 @@ export function DrugComparison() {
                           </tr>
 
                           <tr className="hover:bg-secondary/20">
-                            <td className="p-3 text-muted-foreground">Authorization Renewal</td>
+                            <td className="p-3 text-muted-foreground">Quantity Limit</td>
                             {splitViewData.map((item) => (
-                              <td key={`rn-${item.id}`} className="p-3">
-                                {item.coverageState === "Pharmacy Only" || item.coverageState === "No Policy Found" ? (
-                                  <span className="text-muted-foreground">Skipped</span>
-                                ) : item.coverageCriteria.renewalRequired ? (
-                                  <div>
-                                    <span className="text-foreground">
-                                      Every {item.coverageCriteria.renewalPeriod}
-                                    </span>
-                                  </div>
-                                ) : (
-                                  <span className="text-muted-foreground">Not Required</span>
-                                )}
+                              <td key={`ql-${item.id}`} className="p-3 font-medium">
+                                {item.coverageCriteria.quantityLimit}
                               </td>
                             ))}
                           </tr>
@@ -921,9 +753,7 @@ export function DrugComparison() {
                           </div>
                           <div>
                             <p className="text-muted-foreground">Coverage State</p>
-                            <Badge variant="outline" className={getCoverageStateBadgeClass(item.coverageState)}>
-                              {item.coverageState}
-                            </Badge>
+                            <Badge variant="outline">{item.coverageState}</Badge>
                           </div>
                           <div>
                             <p className="text-muted-foreground">Access Status</p>
@@ -940,13 +770,13 @@ export function DrugComparison() {
                           <div>
                             <p className="text-muted-foreground">Price</p>
                             <p className="font-mono font-semibold text-foreground">
-                              ${item.price.toFixed(2)}
+                              {item.price != null ? `$${item.price.toFixed(2)}` : "N/A"}
                             </p>
                           </div>
                           <div>
                             <p className="text-muted-foreground">Copay</p>
                             <p className="font-mono font-semibold text-primary">
-                              ${item.copay.toFixed(2)}
+                              {item.copay != null ? `$${item.copay.toFixed(2)}` : "N/A"}
                             </p>
                           </div>
                         </div>
@@ -968,7 +798,7 @@ export function DrugComparison() {
                               <FileJson className="h-3 w-3" />
                             </button>
                             <p className="mt-0.5 text-xs text-muted-foreground">
-                              Effective: {item.effectiveDate}
+                              Effective: {item.effectiveDate ?? "Unknown"}
                             </p>
                           </div>
 
@@ -978,28 +808,6 @@ export function DrugComparison() {
                             </p>
                             <p className="text-sm leading-relaxed text-foreground/90">
                               {item.policySummary}
-                            </p>
-                          </div>
-
-                          {item.relatedProducts.length ? (
-                            <div>
-                              <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                                Related Products
-                              </p>
-                              <p className="text-sm leading-relaxed text-foreground/90">
-                                {item.relatedProducts.join(", ")}
-                              </p>
-                            </div>
-                          ) : null}
-
-                          <div>
-                            <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                              Competing Drugs
-                            </p>
-                            <p className="text-sm leading-relaxed text-foreground/90">
-                              {item.competingDrugs.length
-                                ? item.competingDrugs.join(", ")
-                                : "No competitors listed"}
                             </p>
                           </div>
                         </div>
@@ -1016,7 +824,7 @@ export function DrugComparison() {
               <CardContent className="flex flex-col items-center justify-center py-8 text-center">
                 <SplitSquareVertical className="h-10 w-10 text-muted-foreground mb-3" />
                 <p className="text-sm font-medium text-foreground">
-                  Select at least 2 companies to compare
+                  Select at least 2 payers to compare
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Click on rows in the table above to select them for comparison
@@ -1040,16 +848,6 @@ export function DrugComparison() {
   );
 }
 
-function getCoverageStateBadgeClass(coverageState: ComparisonResult["coverageState"]) {
-  const variants: Record<ComparisonResult["coverageState"], string> = {
-    Covered: "bg-emerald-100 text-emerald-700 border-emerald-200",
-    "Not Covered": "bg-red-100 text-red-700 border-red-200",
-    "No Policy Found": "bg-slate-100 text-slate-700 border-slate-200",
-    "Pharmacy Only": "bg-blue-100 text-blue-700 border-blue-200",
-  };
-  return variants[coverageState];
-}
-
 export interface CoverageCriteria {
   priorAuthRequired: boolean;
   priorAuthDetails?: string;
@@ -1070,308 +868,28 @@ export interface ComparisonResult {
   drugName: string;
   genericName: string;
   drugCategory: string;
-  planType: "Commercial" | "Medicaid" | "Medicare";
-  policyType: "Medical Benefit Policy" | "Pharmacy Benefit Policy";
-  coverageState:
-    | "Covered"
-    | "Not Covered"
-    | "No Policy Found"
-    | "Pharmacy Only";
-  formularyAccessStatus:
-    | "Preferred Specialty"
-    | "Non-Specialty"
-    | "Non-Preferred"
-    | "Not Covered"
-    | "N/A";
-  preferredRank: number;
-  totalDrugsOnTier: number;
+  planType: string;
+  policyType: string;
+  coverageState: "Covered" | "Not Covered" | "No Policy Found" | "Pharmacy Only";
+  formularyAccessStatus: string;
+  preferredRank: number | null;
+  totalDrugsOnTier: number | null;
   positionLabel: string;
   competingDrugs: string[];
   rebateImplication: string;
   coverage: "Covered" | "Prior Auth" | "Step Therapy" | "Not Covered";
   tier: number;
   dosage: string;
-  quantity: number;
-  price: number;
-  copay: number;
-  effectiveDate: string;
+  quantity: number | null;
+  price: number | null;
+  copay: number | null;
+  effectiveDate: string | null;
   policyName: string;
-  policyUrl: string;
+  policyUrl: string | null;
   policySummary: string;
   coverageCriteria: CoverageCriteria;
-  moleculeType: string;
-  therapeuticArea: string;
+  moleculeType: string | null;
+  therapeuticArea: string | null;
   relatedProducts: string[];
   policyScopeNote: string;
-}
-
-function slugify(value: string) {
-  return value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-}
-
-function getPlanType(company: string): "Commercial" | "Medicaid" | "Medicare" {
-  if (company === "Humana") return "Medicare";
-  if (company === "Centene") return "Medicaid";
-  return "Commercial";
-}
-
-function getPolicyType(company: string): "Medical Benefit Policy" | "Pharmacy Benefit Policy" {
-  return ["Kaiser Permanente", "UnitedHealthcare", "Aetna"].includes(company)
-    ? "Medical Benefit Policy"
-    : "Pharmacy Benefit Policy";
-}
-
-function getCoverageState(
-  coverage: ComparisonResult["coverage"],
-  policyType: ComparisonResult["policyType"],
-  company: string
-): ComparisonResult["coverageState"] {
-  if (company === "Centene") return "No Policy Found";
-  if (policyType === "Pharmacy Benefit Policy") return "Pharmacy Only";
-  if (coverage === "Not Covered") return "Not Covered";
-  return "Covered";
-}
-
-function getAccessStatus(
-  coverageState: ComparisonResult["coverageState"],
-  tier: number
-): ComparisonResult["formularyAccessStatus"] {
-  if (coverageState === "No Policy Found") return "N/A";
-  if (coverageState === "Pharmacy Only") return "N/A";
-  if (coverageState === "Not Covered") return "Not Covered";
-  if (tier === 1) return "Preferred Specialty";
-  if (tier === 2) return "Non-Specialty";
-  return "Non-Preferred";
-}
-
-function getRebateImplication(rank: number, total: number, accessStatus: string) {
-  if (accessStatus === "Non-Preferred") return "Lost negotiation → minimal rebate";
-  if (total === 1 && rank === 1) return "1 of 1 → exclusive → manufacturer paid highest rebate";
-  if (total === 2 && rank === 1) return "1 of 2 → semi-exclusive → moderate rebate";
-  if (total >= 3) return "1 of 3+ → competitive → smaller individual rebate";
-  return "Moderate rebate positioning";
-}
-
-function generateMockResults(drug: string, companies?: string[]): ComparisonResult[] {
-  const defaultCompanies = [
-    "Aetna",
-    "UnitedHealthcare",
-    "Cigna",
-    "Blue Cross Blue Shield",
-    "Humana",
-    "Kaiser Permanente",
-    "Anthem",
-    "Centene",
-  ];
-
-  const targetCompanies = companies && companies.length > 0 ? companies : defaultCompanies;
-  const coverageOptions: ComparisonResult["coverage"][] = [
-    "Covered",
-    "Prior Auth",
-    "Step Therapy",
-    "Not Covered",
-  ];
-
-  const policySummaries: Record<string, { name: string; summary: string }> = {
-    Aetna: {
-      name: "Aetna Pharmacy Benefit Policy 2024",
-      summary:
-        "Aetna covers this medication under their standard formulary with tiered copay structure. Prior authorization may be required for higher dosages. Step therapy protocols apply for certain therapeutic alternatives.",
-    },
-    UnitedHealthcare: {
-      name: "UHC Prescription Drug Coverage Guidelines",
-      summary:
-        "UnitedHealthcare includes this drug in their preferred brand tier. Coverage requires use of network pharmacies. Quantity limits apply based on FDA-approved dosing guidelines.",
-    },
-    Cigna: {
-      name: "Cigna Pharmacy Management Policy",
-      summary:
-        "Cigna provides coverage with standard cost-sharing requirements. Clinical criteria must be met for approval. Appeals process available for non-formulary exceptions.",
-    },
-    "Blue Cross Blue Shield": {
-      name: "BCBS Formulary Drug Policy",
-      summary:
-        "BCBS covers this medication as part of their comprehensive drug benefit. Tier placement may vary by specific plan design. Prior authorization criteria based on clinical guidelines.",
-    },
-    Humana: {
-      name: "Humana Rx Coverage Criteria",
-      summary:
-        "Humana includes this medication with applicable cost-sharing. Step therapy may require trial of alternatives first. Quantity limits align with manufacturer recommendations.",
-    },
-    "Kaiser Permanente": {
-      name: "Kaiser Drug Formulary Guidelines",
-      summary:
-        "Kaiser Permanente covers this as part of their integrated pharmacy benefit. In-house pharmacies provide convenient access and pharmacist support.",
-    },
-    Anthem: {
-      name: "Anthem Pharmacy Benefit Management Policy",
-      summary:
-        "Anthem provides coverage based on medical necessity criteria. Formulary tier determines member cost responsibility.",
-    },
-    Centene: {
-      name: "Centene Managed Care Drug Policy",
-      summary:
-        "No medical or pharmacy policy was found for this drug in the demo dataset for this payer.",
-    },
-  };
-
-  const defaultPolicy = {
-    name: "Standard Pharmacy Benefit Policy",
-    summary:
-      "This organization provides standard coverage for the requested medication with plan-specific benefit conditions.",
-  };
-
-  const companyCriteria: Record<string, CoverageCriteria> = {
-    Aetna: {
-      priorAuthRequired: true,
-      priorAuthDetails: "Required for doses >40mg daily",
-      stepTherapyRequired: false,
-      quantityLimit: "30 tablets/30 days",
-      ageRestriction: "18+ years",
-      specialtyPharmacyRequired: false,
-      mailOrderAvailable: true,
-      renewalRequired: true,
-      renewalPeriod: "12 months",
-    },
-    UnitedHealthcare: {
-      priorAuthRequired: false,
-      stepTherapyRequired: true,
-      stepTherapyDetails: "Must try generic alternative first",
-      quantityLimit: "60 tablets/30 days",
-      diagnosisRequired: "Must meet diagnosis criteria",
-      specialtyPharmacyRequired: false,
-      mailOrderAvailable: true,
-      renewalRequired: false,
-    },
-    Cigna: {
-      priorAuthRequired: true,
-      priorAuthDetails: "Clinical documentation required",
-      stepTherapyRequired: true,
-      stepTherapyDetails: "2 generic trials required",
-      quantityLimit: "90 tablets/90 days",
-      specialtyPharmacyRequired: false,
-      mailOrderAvailable: true,
-      renewalRequired: true,
-      renewalPeriod: "6 months",
-    },
-    "Blue Cross Blue Shield": {
-      priorAuthRequired: false,
-      stepTherapyRequired: false,
-      quantityLimit: "30 tablets/30 days",
-      specialtyPharmacyRequired: false,
-      mailOrderAvailable: true,
-      renewalRequired: false,
-    },
-    Humana: {
-      priorAuthRequired: true,
-      priorAuthDetails: "Phone or fax submission",
-      stepTherapyRequired: true,
-      stepTherapyDetails: "1 generic trial required",
-      quantityLimit: "60 tablets/30 days",
-      specialtyPharmacyRequired: false,
-      mailOrderAvailable: true,
-      renewalRequired: true,
-      renewalPeriod: "12 months",
-    },
-    "Kaiser Permanente": {
-      priorAuthRequired: false,
-      stepTherapyRequired: false,
-      quantityLimit: "90 tablets/90 days",
-      specialtyPharmacyRequired: false,
-      mailOrderAvailable: true,
-      renewalRequired: false,
-    },
-    Anthem: {
-      priorAuthRequired: true,
-      priorAuthDetails: "Online portal submission",
-      stepTherapyRequired: false,
-      quantityLimit: "30 tablets/30 days",
-      diagnosisRequired: "Must meet approved indications",
-      specialtyPharmacyRequired: true,
-      mailOrderAvailable: false,
-      renewalRequired: true,
-      renewalPeriod: "6 months",
-    },
-    Centene: {
-      priorAuthRequired: false,
-      stepTherapyRequired: false,
-      quantityLimit: "No policy found",
-      specialtyPharmacyRequired: false,
-      mailOrderAvailable: false,
-      renewalRequired: false,
-    },
-  };
-
-  const defaultCriteria: CoverageCriteria = {
-    priorAuthRequired: Math.random() > 0.5,
-    stepTherapyRequired: Math.random() > 0.6,
-    quantityLimit: "30 tablets/30 days",
-    specialtyPharmacyRequired: false,
-    mailOrderAvailable: true,
-    renewalRequired: Math.random() > 0.5,
-    renewalPeriod: "12 months",
-  };
-
-  const meta = getDrugMeta(drug);
-
-  return targetCompanies.map((company) => {
-    const policyInfo = policySummaries[company] || defaultPolicy;
-    const criteria = companyCriteria[company] || defaultCriteria;
-    const coverage = coverageOptions[Math.floor(Math.random() * coverageOptions.length)];
-    const tier = Math.floor(Math.random() * 3) + 1;
-    const totalDrugsOnTier = Math.floor(Math.random() * 3) + 1;
-    const preferredRank = Math.min(
-      Math.floor(Math.random() * totalDrugsOnTier) + 1,
-      totalDrugsOnTier
-    );
-    const planType = getPlanType(company);
-    const policyType = getPolicyType(company);
-    const coverageState = getCoverageState(coverage, policyType, company);
-    const formularyAccessStatus = getAccessStatus(coverageState, tier);
-    const competingDrugs =
-      meta.relatedProducts.length > 0
-        ? meta.relatedProducts.slice(0, Math.max(totalDrugsOnTier - 1, 0))
-        : [];
-
-    return {
-      id: `policy-${slugify(company)}-${slugify(drug)}`,
-      company,
-      drugName: meta.canonicalName,
-      genericName: meta.genericName,
-      drugCategory: meta.drugCategory,
-      planType,
-      policyType,
-      coverageState,
-      formularyAccessStatus,
-      preferredRank,
-      totalDrugsOnTier,
-      positionLabel:
-        coverageState === "Pharmacy Only" || coverageState === "No Policy Found"
-          ? "N/A"
-          : `${formularyAccessStatus === "Preferred Specialty" ? "Preferred" : formularyAccessStatus} ${preferredRank} of ${totalDrugsOnTier}`,
-      competingDrugs:
-        coverageState === "Pharmacy Only" || coverageState === "No Policy Found"
-          ? []
-          : competingDrugs,
-      rebateImplication:
-        coverageState === "Pharmacy Only" || coverageState === "No Policy Found"
-          ? "N/A"
-          : getRebateImplication(preferredRank, totalDrugsOnTier, formularyAccessStatus),
-      coverage,
-      tier,
-      dosage: ["10mg", "20mg", "40mg", "80mg"][Math.floor(Math.random() * 4)],
-      quantity: [30, 60, 90][Math.floor(Math.random() * 3)],
-      price: Math.floor(Math.random() * 300) + 50,
-      copay: Math.floor(Math.random() * 50) + 10,
-      effectiveDate: "2026-04-01",
-      policyName: policyInfo.name,
-      policyUrl: `/api/policy-json/policy-${slugify(company)}-${slugify(drug)}`,
-      policySummary: policyInfo.summary,
-      coverageCriteria: criteria,
-      moleculeType: formatMoleculeType(meta.moleculeType),
-      therapeuticArea: meta.therapeuticArea,
-      relatedProducts: meta.relatedProducts,
-      policyScopeNote: meta.policyGroupingHint,
-    };
-  });
 }

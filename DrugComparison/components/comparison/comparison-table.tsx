@@ -27,14 +27,11 @@ interface ComparisonTableProps {
 type SortKey =
   | "company"
   | "drugName"
-  | "genericName"
   | "drugCategory"
   | "planType"
   | "policyType"
   | "coverageState"
   | "formularyAccessStatus"
-  | "preferredRank"
-  | "totalDrugsOnTier"
   | "price"
   | "copay";
 
@@ -69,6 +66,10 @@ export function ComparisonTable({
         : bValue.localeCompare(aValue);
     }
 
+    if (aValue == null && bValue == null) return 0;
+    if (aValue == null) return 1;
+    if (bValue == null) return -1;
+
     if (typeof aValue === "number" && typeof bValue === "number") {
       return sortDirection === "asc" ? aValue - bValue : bValue - aValue;
     }
@@ -92,9 +93,7 @@ export function ComparisonTable({
   };
 
   const SortIcon = ({ column }: { column: SortKey }) => {
-    if (sortKey !== column) {
-      return <ArrowUpDown className="ml-1 h-3 w-3 opacity-50" />;
-    }
+    if (sortKey !== column) return <ArrowUpDown className="ml-1 h-3 w-3 opacity-50" />;
     return sortDirection === "asc" ? (
       <ChevronUp className="ml-1 h-3 w-3" />
     ) : (
@@ -105,7 +104,7 @@ export function ComparisonTable({
   return (
     <Card className="border-border bg-card overflow-hidden shadow-sm w-full">
       <div className="w-full overflow-x-auto">
-        <Table className="w-full min-w-[1500px] table-fixed text-[12px]">
+        <Table className="w-full min-w-[1600px] table-fixed text-[12px]">
           <TableHeader>
             <TableRow className="border-border hover:bg-transparent bg-secondary/30">
               {selectable && (
@@ -114,130 +113,65 @@ export function ComparisonTable({
                 </TableHead>
               )}
 
-              <TableHead className="w-[140px] px-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleSort("drugName")}
-                  className="-ml-2 h-8 px-1 font-medium text-muted-foreground hover:text-foreground whitespace-nowrap text-[11px]"
-                >
-                  Drug
-                  <SortIcon column="drugName" />
-                </Button>
-              </TableHead>
-
-              <TableHead className="w-[130px] px-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleSort("company")}
-                  className="-ml-2 h-8 px-1 font-medium text-muted-foreground hover:text-foreground whitespace-nowrap text-[11px]"
-                >
-                  Payer
-                  <SortIcon column="company" />
+              <TableHead className="w-[150px] px-2">
+                <Button variant="ghost" size="sm" onClick={() => handleSort("drugName")} className="-ml-2 h-8 px-1 text-[11px]">
+                  Drug <SortIcon column="drugName" />
                 </Button>
               </TableHead>
 
               <TableHead className="w-[150px] px-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleSort("drugCategory")}
-                  className="-ml-2 h-8 px-1 font-medium text-muted-foreground hover:text-foreground whitespace-nowrap text-[11px]"
-                >
-                  Category
-                  <SortIcon column="drugCategory" />
+                <Button variant="ghost" size="sm" onClick={() => handleSort("company")} className="-ml-2 h-8 px-1 text-[11px]">
+                  Payer <SortIcon column="company" />
                 </Button>
               </TableHead>
 
-              <TableHead className="w-[90px] px-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleSort("planType")}
-                  className="-ml-2 h-8 px-1 font-medium text-muted-foreground hover:text-foreground whitespace-nowrap text-[11px]"
-                >
-                  Plan
-                  <SortIcon column="planType" />
-                </Button>
-              </TableHead>
-
-              <TableHead className="w-[140px] px-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleSort("policyType")}
-                  className="-ml-2 h-8 px-1 font-medium text-muted-foreground hover:text-foreground whitespace-nowrap text-[11px]"
-                >
-                  Policy Type
-                  <SortIcon column="policyType" />
-                </Button>
-              </TableHead>
-
-              <TableHead className="w-[130px] px-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleSort("coverageState")}
-                  className="-ml-2 h-8 px-1 font-medium text-muted-foreground hover:text-foreground whitespace-nowrap text-[11px]"
-                >
-                  Coverage
-                  <SortIcon column="coverageState" />
+              <TableHead className="w-[160px] px-2">
+                <Button variant="ghost" size="sm" onClick={() => handleSort("drugCategory")} className="-ml-2 h-8 px-1 text-[11px]">
+                  Category <SortIcon column="drugCategory" />
                 </Button>
               </TableHead>
 
               <TableHead className="w-[120px] px-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleSort("formularyAccessStatus")}
-                  className="-ml-2 h-8 px-1 font-medium text-muted-foreground hover:text-foreground whitespace-nowrap text-[11px]"
-                >
-                  Access
-                  <SortIcon column="formularyAccessStatus" />
+                <Button variant="ghost" size="sm" onClick={() => handleSort("planType")} className="-ml-2 h-8 px-1 text-[11px]">
+                  Plan <SortIcon column="planType" />
                 </Button>
               </TableHead>
 
-              <TableHead className="w-[130px] px-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleSort("preferredRank")}
-                  className="-ml-2 h-8 px-1 font-medium text-muted-foreground hover:text-foreground whitespace-nowrap text-[11px]"
-                >
-                  Ranking
-                  <SortIcon column="preferredRank" />
+              <TableHead className="w-[180px] px-2">
+                <Button variant="ghost" size="sm" onClick={() => handleSort("policyType")} className="-ml-2 h-8 px-1 text-[11px]">
+                  Policy Type <SortIcon column="policyType" />
                 </Button>
               </TableHead>
 
-              <TableHead className="w-[170px] px-2">Competing Drugs</TableHead>
-              <TableHead className="w-[200px] px-2">Rebate Implication</TableHead>
-
-              <TableHead className="w-[80px] px-2 text-right">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleSort("price")}
-                  className="-ml-2 h-8 px-1 font-medium text-muted-foreground hover:text-foreground whitespace-nowrap text-[11px]"
-                >
-                  Price
-                  <SortIcon column="price" />
+              <TableHead className="w-[150px] px-2">
+                <Button variant="ghost" size="sm" onClick={() => handleSort("coverageState")} className="-ml-2 h-8 px-1 text-[11px]">
+                  Coverage <SortIcon column="coverageState" />
                 </Button>
               </TableHead>
 
-              <TableHead className="w-[80px] px-2 text-right">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleSort("copay")}
-                  className="-ml-2 h-8 px-1 font-medium text-muted-foreground hover:text-foreground whitespace-nowrap text-[11px]"
-                >
-                  Copay
-                  <SortIcon column="copay" />
+              <TableHead className="w-[150px] px-2">
+                <Button variant="ghost" size="sm" onClick={() => handleSort("formularyAccessStatus")} className="-ml-2 h-8 px-1 text-[11px]">
+                  Access <SortIcon column="formularyAccessStatus" />
                 </Button>
               </TableHead>
 
-              <TableHead className="w-[110px] px-2">Policy</TableHead>
+              <TableHead className="w-[150px] px-2">Ranking</TableHead>
+              <TableHead className="w-[180px] px-2">Competing Drugs</TableHead>
+              <TableHead className="w-[220px] px-2">Rebate Implication</TableHead>
+
+              <TableHead className="w-[100px] px-2 text-right">
+                <Button variant="ghost" size="sm" onClick={() => handleSort("price")} className="-ml-2 h-8 px-1 text-[11px]">
+                  Price <SortIcon column="price" />
+                </Button>
+              </TableHead>
+
+              <TableHead className="w-[100px] px-2 text-right">
+                <Button variant="ghost" size="sm" onClick={() => handleSort("copay")} className="-ml-2 h-8 px-1 text-[11px]">
+                  Copay <SortIcon column="copay" />
+                </Button>
+              </TableHead>
+
+              <TableHead className="w-[120px] px-2">Policy</TableHead>
             </TableRow>
           </TableHeader>
 
@@ -251,9 +185,7 @@ export function ComparisonTable({
                   className={cn(
                     "border-border transition-colors align-top",
                     selectable && "cursor-pointer",
-                    isSelected
-                      ? "bg-primary/10 hover:bg-primary/15"
-                      : "hover:bg-secondary/50"
+                    isSelected ? "bg-primary/10 hover:bg-primary/15" : "hover:bg-secondary/50"
                   )}
                   onClick={() => selectable && onToggleSelect?.(row.id)}
                 >
@@ -262,9 +194,7 @@ export function ComparisonTable({
                       <div
                         className={cn(
                           "flex h-5 w-5 items-center justify-center rounded border-2 transition-colors",
-                          isSelected
-                            ? "border-primary bg-primary text-primary-foreground"
-                            : "border-border"
+                          isSelected ? "border-primary bg-primary text-primary-foreground" : "border-border"
                         )}
                       >
                         {isSelected && <Check className="h-3 w-3" />}
@@ -306,9 +236,7 @@ export function ComparisonTable({
                   </TableCell>
 
                   <TableCell className="px-2 py-3 align-top">
-                    <div className="whitespace-normal">
-                      {getCoverageStateBadge(row.coverageState)}
-                    </div>
+                    {getCoverageStateBadge(row.coverageState)}
                   </TableCell>
 
                   <TableCell className="px-2 py-3 align-top">
@@ -321,16 +249,11 @@ export function ComparisonTable({
                     <div className="whitespace-normal break-words text-muted-foreground leading-5">
                       {row.positionLabel}
                     </div>
-                    <div className="mt-1 text-[11px] text-muted-foreground">
-                      Rank {row.preferredRank} of {row.totalDrugsOnTier}
-                    </div>
                   </TableCell>
 
                   <TableCell className="px-2 py-3 align-top">
                     <div className="whitespace-normal break-words text-muted-foreground leading-5">
-                      {row.competingDrugs.length > 0
-                        ? row.competingDrugs.join(", ")
-                        : "—"}
+                      {row.competingDrugs.length ? row.competingDrugs.join(", ") : "—"}
                     </div>
                   </TableCell>
 
@@ -342,13 +265,13 @@ export function ComparisonTable({
 
                   <TableCell className="px-2 py-3 align-top text-right">
                     <div className="whitespace-nowrap font-mono text-foreground">
-                      ${row.price.toFixed(2)}
+                      {row.price != null ? `$${row.price.toFixed(2)}` : "N/A"}
                     </div>
                   </TableCell>
 
                   <TableCell className="px-2 py-3 align-top text-right">
                     <div className="whitespace-nowrap font-mono font-semibold text-primary">
-                      ${row.copay.toFixed(2)}
+                      {row.copay != null ? `$${row.copay.toFixed(2)}` : "N/A"}
                     </div>
                   </TableCell>
 
