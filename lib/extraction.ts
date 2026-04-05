@@ -1,8 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { v4 as uuidv4 } from 'uuid';
+import { claude, CLAUDE_MODEL } from './ai';
 import type { PolicyDocument, CoverageStatus } from './types';
-
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const EXTRACTION_SYSTEM_PROMPT = `
 You are a clinical policy document parser for Anton Cx, a medical benefit drug intelligence platform.
@@ -110,8 +109,8 @@ export async function extractPolicyFromPdf(
     },
   ];
 
-  const response = await client.messages.create({
-    model:      'claude-sonnet-4-6',
+  const response = await claude.messages.create({
+    model:      CLAUDE_MODEL,
     max_tokens: 2048,
     system:     EXTRACTION_SYSTEM_PROMPT,
     messages:   [{ role: 'user', content: userContent }],

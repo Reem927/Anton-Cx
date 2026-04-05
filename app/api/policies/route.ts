@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { supabase } from '@/lib/supabase';
 import type { PolicyDocument } from '@/lib/types';
 
 export async function GET(request: NextRequest) {
@@ -11,29 +11,25 @@ export async function GET(request: NextRequest) {
     const date_from  = searchParams.get('date_from')  ?? undefined;
     const date_to    = searchParams.get('date_to')    ?? undefined;
 
-    const where: Record<string, unknown> = {};
-    if (payer_id)  where.payer_id  = payer_id;
-    if (drug_id)   where.drug_id   = drug_id;
-    if (drug_name) where.drug_name = { contains: drug_name };
+    let query = supabase
+      .from('policy_documents')
+      .select('*')
+      .order('drug_name', { ascending: true })
+      .order('effective_date', { ascending: false });
 
-    if (date_from || date_to) {
-      where.effective_date = {
-        ...(date_from ? { gte: date_from } : {}),
-        ...(date_to   ? { lte: date_to   } : {}),
-      };
+    if (payer_id)  query = query.eq('payer_id', payer_id);
+    if (drug_id)   query = query.eq('drug_id', drug_id);
+    if (drug_name) query = query.ilike('drug_name', `%${drug_name}%`);
+    if (date_from) query = query.gte('effective_date', date_from);
+    if (date_to)   query = query.lte('effective_date', date_to);
+
+    const { data: rows, error } = await query;
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const rows = await prisma.policyDocument.findMany({
-      where,
-      orderBy: [{ drug_name: 'asc' }, { effective_date: 'desc' }],
-    });
-
-    const policies: PolicyDocument[] = rows.map((row) => ({
-      ...(row as unknown as PolicyDocument),
-      step_therapy_drugs: JSON.parse(row.step_therapy_drugs ?? '[]'),
-      indications:        JSON.parse(row.indications ?? '[]'),
-      changed_fields:     JSON.parse(row.changed_fields ?? '[]'),
-    }));
+    const policies = (rows ?? []) as unknown as PolicyDocument[];
 
     return NextResponse.json(policies, { status: 200 });
   } catch (err: unknown) {

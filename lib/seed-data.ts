@@ -1,7 +1,7 @@
 import type { PolicyDocument } from "./types";
 
 // Static seed data for client-side rendering before DB is connected.
-// Mirrors prisma/seed.ts — 20 records across 8 payers, 5 drug classes.
+// 20 records across 8 payers, 5 drug classes.
 export const SEED_POLICIES: PolicyDocument[] = [
   // Humira — aetna
   {
