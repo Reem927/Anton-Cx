@@ -212,12 +212,11 @@ export default function PolicySearch() {
 
   return (
     <div style={{
-      fontFamily: "'DM Sans', sans-serif",
+      fontFamily: "var(--font-dm-sans), Lato, sans-serif",
       background: "#F7F8FC",
-      minHeight: "100vh",
+      minHeight: "100%",
       padding: "0 0 60px",
     }}>
-      <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
       <div style={{
         background: "#FFFFFF",
