@@ -17,7 +17,7 @@ export default function DashboardPage() {
       <div className="mb-6">
         <h1
           style={{
-            fontFamily:   "var(--font-syne), Syne, sans-serif",
+            fontFamily:   "var(--font-syne), Lato, sans-serif",
             fontSize:     "22px",
             fontWeight:   800,
             color:        "#0D1C3A",
@@ -28,7 +28,7 @@ export default function DashboardPage() {
         </h1>
         <p
           style={{
-            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+            fontFamily: "var(--font-dm-sans), Lato, sans-serif",
             fontSize:   "13px",
             color:      "#6A7590",
           }}
@@ -47,7 +47,7 @@ export default function DashboardPage() {
         <div>
           <h2
             style={{
-              fontFamily:    "var(--font-dm-mono), 'DM Mono', monospace",
+              fontFamily:    "var(--font-dm-mono), Lato, sans-serif",
               fontSize:      "10px",
               fontWeight:    500,
               letterSpacing: "0.08em",
@@ -63,7 +63,7 @@ export default function DashboardPage() {
         <div>
           <h2
             style={{
-              fontFamily:    "var(--font-dm-mono), 'DM Mono', monospace",
+              fontFamily:    "var(--font-dm-mono), Lato, sans-serif",
               fontSize:      "10px",
               fontWeight:    500,
               letterSpacing: "0.08em",

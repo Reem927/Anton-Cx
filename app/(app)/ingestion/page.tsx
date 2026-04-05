@@ -36,7 +36,7 @@ export default function IngestionPage() {
         <h1
           className="header-el"
           style={{
-            fontFamily: "var(--font-syne), Syne, sans-serif",
+            fontFamily: "var(--font-syne), Lato, sans-serif",
             fontSize: "22px",
             fontWeight: 800,
             color: "#0D1C3A",
@@ -48,7 +48,7 @@ export default function IngestionPage() {
         <p
           className="header-el"
           style={{
-            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+            fontFamily: "var(--font-dm-sans), Lato, sans-serif",
             fontSize: "13px",
             color: "#6A7590",
           }}
@@ -75,7 +75,7 @@ export default function IngestionPage() {
               onClick={() => setActiveTab(tab.key)}
               className="relative flex-1 flex items-center justify-center gap-[6px] rounded-md py-[9px] px-3"
               style={{
-                fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                fontFamily: "var(--font-dm-sans), Lato, sans-serif",
                 fontSize: "13px",
                 fontWeight: active ? 500 : 400,
                 color: active ? "#1B3A6B" : "#6A7590",

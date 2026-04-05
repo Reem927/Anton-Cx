@@ -49,7 +49,7 @@ export function PersonaSwitcher({ current, onChange }: PersonaSwitcherProps) {
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
               className="relative z-10"
               style={{
-                fontFamily:    "var(--font-dm-mono), 'DM Mono', monospace",
+                fontFamily:    "var(--font-dm-mono), Lato, sans-serif",
                 fontSize:      "10px",
                 fontWeight:    500,
                 letterSpacing: "0.07em",

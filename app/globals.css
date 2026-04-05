@@ -36,12 +36,17 @@
   --sidebar-accent-foreground: #0D1C3A;
   --sidebar-border: #E8EBF2;
   --sidebar-ring: #2E6BE6;
+
+  /* All font aliases resolve to Lato */
+  --font-syne:    var(--font-lato), Lato, sans-serif;
+  --font-dm-sans: var(--font-lato), Lato, sans-serif;
+  --font-dm-mono: var(--font-lato), Lato, sans-serif;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: "DM Sans", sans-serif;
+  font-family: var(--font-lato), Lato, sans-serif;
 }
 
 @layer base {

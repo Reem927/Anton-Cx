@@ -83,7 +83,7 @@ export function TopBar({
           >
             <span
               style={{
-                fontFamily: "var(--font-syne), Syne, sans-serif",
+                fontFamily: "var(--font-syne), Lato, sans-serif",
                 fontSize:   "15px",
                 fontWeight: 800,
                 color:      "#1B3A6B",
@@ -100,7 +100,7 @@ export function TopBar({
       <div className="flex items-center gap-2 flex-1 min-w-0">
         <span
           style={{
-            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+            fontFamily: "var(--font-dm-sans), Lato, sans-serif",
             fontSize:   "13px",
             color:      "#A0AABB",
           }}
@@ -109,7 +109,7 @@ export function TopBar({
         </span>
         <span
           style={{
-            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+            fontFamily: "var(--font-dm-sans), Lato, sans-serif",
             fontSize:   "13px",
             color:      "#0D1C3A",
             fontWeight: 500,
@@ -124,7 +124,7 @@ export function TopBar({
         {/* Quarter chip */}
         <span
           style={{
-            fontFamily:    "var(--font-dm-mono), 'DM Mono', monospace",
+            fontFamily:    "var(--font-dm-mono), Lato, sans-serif",
             fontSize:      "10px",
             fontWeight:    500,
             color:         "#6A7590",

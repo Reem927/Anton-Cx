@@ -61,7 +61,7 @@ export function SearchHero({ persona, onSearch, activeFilter, onFilter }: Search
             placeholder={config.searchLabel}
             className="flex-1 bg-transparent outline-none"
             style={{
-              fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+              fontFamily: "var(--font-dm-sans), Lato, sans-serif",
               fontSize:   "14px",
               color:      "#0D1C3A",
             }}
@@ -88,7 +88,7 @@ export function SearchHero({ persona, onSearch, activeFilter, onFilter }: Search
               onClick={() => onFilter(filter)}
               className="filter-chip rounded px-3 py-[5px] transition-colors"
               style={{
-                fontFamily:    "var(--font-dm-mono), 'DM Mono', monospace",
+                fontFamily:    "var(--font-dm-mono), Lato, sans-serif",
                 fontSize:      "10px",
                 fontWeight:    500,
                 letterSpacing: "0.05em",
