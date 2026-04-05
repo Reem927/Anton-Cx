@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, Fragment } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { StatusPill } from "@/components/ui/StatusPill";
 import type { PolicyDocument } from "@/lib/types";
 import type { PersonaConfig } from "@/lib/persona";
@@ -27,10 +29,18 @@ const CELL_BG: Record<CellState, string> = {
 };
 
 export function CompareGrid({ payers, drug, policies, config, diffsOnly }: CompareGridProps) {
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const drugPolicies = policies.filter((p) => p.drug_name === drug && payers.includes(p.payer_id));
-
-  // Build rows from config.columns (excluding "payer_id" which is the header)
   const dataColumns = config.columns.filter((c) => c.key !== "payer_id");
+
+  const toggleRow = (key: string) => {
+    setExpandedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
 
   return (
     <div
@@ -51,7 +61,6 @@ export function CompareGrid({ payers, drug, policies, config, diffsOnly }: Compa
           ))}
         </colgroup>
 
-        {/* Header */}
         <thead>
           <tr style={{ borderBottom: "0.5px solid #E8EBF2" }}>
             <th
@@ -109,7 +118,6 @@ export function CompareGrid({ payers, drug, policies, config, diffsOnly }: Compa
           </tr>
         </thead>
 
-        {/* Body */}
         <tbody>
           {dataColumns.map((col) => {
             const values = payers.map((payer) => {
@@ -118,53 +126,165 @@ export function CompareGrid({ payers, drug, policies, config, diffsOnly }: Compa
             });
 
             const cellState = getCellState(values);
+            const isExpanded = expandedRows.has(col.key);
 
-            // In diffsOnly mode, hide matching rows
             if (diffsOnly && cellState === "match") return null;
 
             return (
-              <tr key={col.key} style={{ borderBottom: "0.5px solid #E8EBF2" }}>
-                <td
+              <Fragment key={col.key}>
+                <tr
+                  onClick={() => toggleRow(col.key)}
                   style={{
-                    padding:    "10px 16px",
-                    fontFamily: "var(--font-dm-mono), 'DM Mono', monospace",
-                    fontSize:   "10px",
-                    fontWeight: 500,
-                    color:      "#6A7590",
-                    letterSpacing: "0.05em",
-                    background: "#FAFBFD",
-                    verticalAlign: "top",
+                    borderBottom: isExpanded ? "none" : "0.5px solid #E8EBF2",
+                    cursor: "pointer",
+                    transition: "background 80ms",
                   }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "#FAFBFD"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
                 >
-                  {col.label.toUpperCase()}
-                </td>
-                {payers.map((payer, pi) => {
-                  const policy = drugPolicies.find((p) => p.payer_id === payer);
-                  const value  = values[pi];
-                  const isChanged = policy?.changed_fields.includes(col.key) ?? false;
-                  const bg = isChanged ? CELL_BG.changed : CELL_BG[cellState];
+                  <td
+                    style={{
+                      padding:    "10px 16px",
+                      fontFamily: "var(--font-dm-mono), 'DM Mono', monospace",
+                      fontSize:   "10px",
+                      fontWeight: 500,
+                      color:      "#6A7590",
+                      letterSpacing: "0.05em",
+                      background: "#FAFBFD",
+                      verticalAlign: "middle",
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <motion.span
+                        animate={{ rotate: isExpanded ? 90 : 0 }}
+                        transition={{ duration: 0.15 }}
+                        style={{ display: "inline-block" }}
+                      >
+                        <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                          <path d="M2 1l4 3-4 3" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </motion.span>
+                      {col.label.toUpperCase()}
+                    </div>
+                  </td>
+                  {payers.map((payer, pi) => {
+                    const policy = drugPolicies.find((p) => p.payer_id === payer);
+                    const value  = values[pi];
+                    const isChanged = policy?.changed_fields.includes(col.key) ?? false;
+                    const bg = isChanged ? CELL_BG.changed : CELL_BG[cellState];
 
-                  return (
-                    <td
-                      key={payer}
-                      style={{
-                        padding:       "10px 16px",
-                        background:    bg,
-                        borderLeft:    "0.5px solid #E8EBF2",
-                        verticalAlign: "top",
-                      }}
-                    >
-                      <CellValue fieldKey={col.key} value={value} policy={policy} />
-                    </td>
-                  );
-                })}
-              </tr>
+                    return (
+                      <td
+                        key={payer}
+                        style={{
+                          padding:       "10px 16px",
+                          background:    bg,
+                          borderLeft:    "0.5px solid #E8EBF2",
+                          verticalAlign: "middle",
+                        }}
+                      >
+                        <CellValue fieldKey={col.key} value={value} policy={policy} />
+                      </td>
+                    );
+                  })}
+                </tr>
+                <AnimatePresence>
+                  {isExpanded && (
+                    <tr key={`${col.key}-expanded`}>
+                      <td
+                        colSpan={payers.length + 1}
+                        style={{
+                          borderBottom: "0.5px solid #E8EBF2",
+                          background: "#FAFBFD",
+                          padding: "12px 16px",
+                        }}
+                      >
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="text-xs"
+                          style={{
+                            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                            fontSize: "12px",
+                            color: "#6A7590",
+                            lineHeight: 1.6,
+                          }}
+                        >
+                          {payers.map((payer) => {
+                            const policy = drugPolicies.find((p) => p.payer_id === payer);
+                            const value = policy ? policy[col.key as keyof PolicyDocument] : null;
+                            return (
+                              <div key={payer} className="mb-2 last:mb-0">
+                                <span
+                                  style={{
+                                    fontFamily: "var(--font-dm-mono), 'DM Mono', monospace",
+                                    fontSize: "9px",
+                                    fontWeight: 600,
+                                    color: "#2E6BE6",
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.05em",
+                                  }}
+                                >
+                                  {payer}
+                                </span>
+                                <div style={{ marginTop: "4px", color: "#0D1C3A" }}>
+                                  <ExpandedCellValue fieldKey={col.key} value={value} />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </motion.div>
+                      </td>
+                    </tr>
+                  )}
+                </AnimatePresence>
+              </Fragment>
             );
           })}
         </tbody>
       </table>
     </div>
   );
+}
+
+function ExpandedCellValue({ fieldKey, value }: { fieldKey: string; value: unknown }) {
+  if (value === null || value === undefined) {
+    return <span style={{ color: "#D0D6E8" }}>No data</span>;
+  }
+
+  if (fieldKey === "prior_auth_criteria" || fieldKey === "clinical_criteria") {
+    return <span style={{ whiteSpace: "pre-wrap" }}>{String(value)}</span>;
+  }
+
+  if (Array.isArray(value)) {
+    if (value.length === 0) return <span style={{ color: "#D0D6E8" }}>None specified</span>;
+    return (
+      <div className="flex flex-wrap gap-1">
+        {(value as string[]).map((v) => (
+          <span
+            key={v}
+            style={{
+              fontFamily: "var(--font-dm-mono), 'DM Mono', monospace",
+              fontSize: "10px",
+              color: "#6A7590",
+              background: "#FFFFFF",
+              borderWidth: "0.5px",
+              borderStyle: "solid",
+              borderColor: "#E8EBF2",
+              borderRadius: "3px",
+              padding: "2px 8px",
+            }}
+          >
+            {v}
+          </span>
+        ))}
+      </div>
+    );
+  }
+
+  return <span>{String(value)}</span>;
 }
 
 function CellValue({

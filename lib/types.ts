@@ -35,3 +35,26 @@ export interface DiffResult {
   prev_value:   unknown;
   next_value:   unknown;
 }
+
+export type ChangeSeverity = 'major' | 'moderate' | 'cosmetic';
+
+export interface FieldDiff {
+  field_name:         string;
+  field_path:         string;
+  old_value:          unknown;
+  new_value:          unknown;
+  severity:           ChangeSeverity;
+  clinical_impact:    boolean;
+  impact_explanation: string;
+  change_type:        'added' | 'removed' | 'modified';
+}
+
+export interface ChangeTrackingResult {
+  change_severity_overall: ChangeSeverity;
+  change_summary:          string;
+  total_changes:           number;
+  major_changes:           number;
+  moderate_changes:        number;
+  cosmetic_changes:        number;
+  changed_fields:          FieldDiff[];
+}
