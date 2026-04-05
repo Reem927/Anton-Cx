@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { extractPolicyFromPdf } from '@/lib/extraction';
-import { prisma } from '@/lib/db';
+import { supabase } from '@/lib/supabase';
 import { getChangedFields } from '@/lib/diff';
 import type { PolicyDocument } from '@/lib/types';
 
@@ -22,48 +22,35 @@ export async function POST(request: NextRequest) {
     const extracted = await extractPolicyFromPdf(body.pdf, body.payer_id, body.drug_name);
 
     // Look for a previous version to diff against
-    const prev = await prisma.policyDocument.findFirst({
-      where:   { payer_id: body.payer_id, drug_id: extracted.drug_id },
-      orderBy: { effective_date: 'desc' },
-    });
+    const { data: prev } = await supabase
+      .from('policy_documents')
+      .select('*')
+      .eq('payer_id', body.payer_id)
+      .eq('drug_id', extracted.drug_id)
+      .order('effective_date', { ascending: false })
+      .limit(1)
+      .single();
 
     let changedFields: string[] = [];
     if (prev) {
-      const prevDoc = deserializePolicy(prev);
-      changedFields = getChangedFields(prevDoc, extracted);
+      changedFields = getChangedFields(prev as unknown as PolicyDocument, extracted);
     }
 
-    const toSave = {
-      ...extracted,
-      step_therapy_drugs: JSON.stringify(extracted.step_therapy_drugs),
-      indications:        JSON.stringify(extracted.indications),
-      changed_fields:     JSON.stringify(changedFields),
-    };
+    const toSave = { ...extracted, changed_fields: changedFields };
 
-    const saved = await prisma.policyDocument.upsert({
-      where: {
-        payer_id_drug_id_effective_date: {
-          payer_id:      toSave.payer_id,
-          drug_id:       toSave.drug_id,
-          effective_date: toSave.effective_date,
-        },
-      },
-      create: toSave,
-      update: toSave,
-    });
+    const { data: saved, error } = await supabase
+      .from('policy_documents')
+      .upsert(toSave, { onConflict: 'payer_id,drug_id,effective_date' })
+      .select()
+      .single();
 
-    return NextResponse.json(deserializePolicy(saved), { status: 200 });
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(saved as unknown as PolicyDocument, { status: 200 });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Extraction failed';
     return NextResponse.json({ error: message }, { status: 500 });
   }
-}
-
-function deserializePolicy(row: Record<string, unknown>): PolicyDocument {
-  return {
-    ...(row as unknown as PolicyDocument),
-    step_therapy_drugs: JSON.parse(row.step_therapy_drugs as string ?? '[]'),
-    indications:        JSON.parse(row.indications as string ?? '[]'),
-    changed_fields:     JSON.parse(row.changed_fields as string ?? '[]'),
-  };
 }
