@@ -309,7 +309,7 @@ function SettingsPageContent() {
             <SettingsCard title="Session" hideSave>
               <FieldRow label="Sign out" last>
                 <button
-                  onClick={() => router.push("/login")}
+                  onClick={() => router.push("/")}
                   style={{
                     fontFamily:   "var(--font-dm-sans), 'DM Sans', sans-serif",
                     fontSize:     "13px",
