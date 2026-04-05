@@ -5,12 +5,17 @@
 :root {
   --background: #F7F8FC;
   --foreground: #0D1C3A;
+
+  /* All font aliases resolve to Lato */
+  --font-syne:    var(--font-lato), Lato, sans-serif;
+  --font-dm-sans: var(--font-lato), Lato, sans-serif;
+  --font-dm-mono: var(--font-lato), Lato, sans-serif;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: "DM Sans", sans-serif;
+  font-family: var(--font-lato), Lato, sans-serif;
 }
 
 @keyframes shimmer {

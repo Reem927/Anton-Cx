@@ -121,10 +121,19 @@ async function callClaudeExtraction(
 ): Promise<unknown> {
   const userText = [
     'Extract policy information from this clinical policy document.',
-    drugHint ? `Drug to extract: ${drugHint}` : null,
-    // Only provide a payer hint if we actually know it (not "Unknown")
+    drugHint ? `Drug to extract: ${drugHint}` : 'Identify the primary drug this policy covers and extract it.',
     payerHint && payerHint !== 'Unknown' ? `Payer hint: ${payerHint}` : 'Determine the payer name from the document content.',
     'If the document covers MULTIPLE payers, set payer_name to all payer names separated by " | " (e.g. "Aetna | UnitedHealthcare | Cigna"). If only one payer, use their full name.',
+    'IMPORTANT: Extract ALL sections comprehensively. Do NOT stop at coverage_status. You MUST extract:',
+    '- indications (every covered diagnosis with stage, line of therapy, biomarkers)',
+    '- prior_auth (all criteria including prescriber requirements, lab/imaging requirements, renewal criteria)',
+    '- step_therapy (all required steps with drug names, durations, failure definitions)',
+    '- site_of_care (allowed sites, restricted sites, preferred site, SOS program)',
+    '- dosing (dose amount, frequency, max quantity, max duration, max cycles)',
+    '- covered_alternatives (all listed alternative drugs)',
+    '- price, copay, rebate (only if explicitly stated in the document)',
+    '- flags (PA, SOS, CC, CA shorthand codes)',
+    'If a section has data in the document, you MUST populate it. Only use null/empty for fields genuinely absent from the document.',
     'Return ONLY the JSON object. No markdown, no explanation.',
   ].filter(Boolean).join('\n');
 

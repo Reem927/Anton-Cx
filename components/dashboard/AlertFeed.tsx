@@ -103,7 +103,7 @@ export function AlertFeed({ alerts = DEMO_ALERTS }: Partial<AlertFeedProps>) {
             <div className="flex items-center gap-2 mb-[2px]">
               <span
                 style={{
-                  fontFamily: "var(--font-syne), Syne, sans-serif",
+                  fontFamily: "var(--font-syne), Lato, sans-serif",
                   fontSize:   "13px",
                   fontWeight: 700,
                   color:      "#0D1C3A",
@@ -113,7 +113,7 @@ export function AlertFeed({ alerts = DEMO_ALERTS }: Partial<AlertFeedProps>) {
               </span>
               <span
                 style={{
-                  fontFamily:    "var(--font-dm-mono), 'DM Mono', monospace",
+                  fontFamily:    "var(--font-dm-mono), Lato, sans-serif",
                   fontSize:      "9px",
                   color:         "#A0AABB",
                   letterSpacing: "0.05em",
@@ -124,7 +124,7 @@ export function AlertFeed({ alerts = DEMO_ALERTS }: Partial<AlertFeedProps>) {
             </div>
             <p
               style={{
-                fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                fontFamily: "var(--font-dm-sans), Lato, sans-serif",
                 fontSize:   "12px",
                 color:      "#6A7590",
                 margin:     0,
@@ -136,7 +136,7 @@ export function AlertFeed({ alerts = DEMO_ALERTS }: Partial<AlertFeedProps>) {
 
           <span
             style={{
-              fontFamily:    "var(--font-dm-mono), 'DM Mono', monospace",
+              fontFamily:    "var(--font-dm-mono), Lato, sans-serif",
               fontSize:      "9px",
               color:         "#A0AABB",
               letterSpacing: "0.04em",

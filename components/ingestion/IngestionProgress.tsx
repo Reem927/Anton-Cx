@@ -67,7 +67,7 @@ export function IngestionProgress({
             <div className="flex-1 min-w-0">
               <p
                 style={{
-                  fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                  fontFamily: "var(--font-dm-sans), Lato, sans-serif",
                   fontSize: "14px",
                   fontWeight: 500,
                   color: "#B02020",
@@ -79,7 +79,7 @@ export function IngestionProgress({
               </p>
               <p
                 style={{
-                  fontFamily: "var(--font-dm-mono), 'DM Mono', monospace",
+                  fontFamily: "var(--font-dm-mono), Lato, sans-serif",
                   fontSize: "11px",
                   color: "#6A7590",
                   margin: 0,
@@ -112,7 +112,7 @@ export function IngestionProgress({
             <div className="flex-1 min-w-0">
               <p
                 style={{
-                  fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                  fontFamily: "var(--font-dm-sans), Lato, sans-serif",
                   fontSize: "14px",
                   fontWeight: 500,
                   color: "#0F7A40",
@@ -126,7 +126,7 @@ export function IngestionProgress({
               </p>
               <p
                 style={{
-                  fontFamily: "var(--font-dm-mono), 'DM Mono', monospace",
+                  fontFamily: "var(--font-dm-mono), Lato, sans-serif",
                   fontSize: "11px",
                   color: "#6A7590",
                   margin: 0,
@@ -149,7 +149,7 @@ export function IngestionProgress({
           <div className="flex flex-col gap-3">
             <p
               style={{
-                fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                fontFamily: "var(--font-dm-sans), Lato, sans-serif",
                 fontSize: "13px",
                 fontWeight: 500,
                 color: "#0D1C3A",
@@ -195,7 +195,7 @@ export function IngestionProgress({
                   </div>
                   <span
                     style={{
-                      fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                      fontFamily: "var(--font-dm-sans), Lato, sans-serif",
                       fontSize: "13px",
                       color: isPending ? "#A0AABB" : isDone ? "#0F7A40" : "#0D1C3A",
                       fontWeight: isActive ? 500 : 400,

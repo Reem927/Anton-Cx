@@ -96,7 +96,7 @@ function SPill({ status }: { status: string }) {
   const p = STATUS_PILL[status];
   return (
     <span style={{
-      fontFamily: "var(--font-dm-mono),'DM Mono',monospace",
+      fontFamily: "var(--font-dm-mono),Lato,sans-serif",
       fontSize: "9px", fontWeight: 500, letterSpacing: "0.06em",
       padding: "2px 6px", borderRadius: "4px", whiteSpace: "nowrap" as const,
       background: p.bg, color: p.text,
@@ -108,7 +108,7 @@ function SPill({ status }: { status: string }) {
 function TPill({ label, bg, text, border }: { label: string; bg: string; text: string; border: string }) {
   return (
     <span style={{
-      fontFamily: "var(--font-dm-mono),'DM Mono',monospace",
+      fontFamily: "var(--font-dm-mono),Lato,sans-serif",
       fontSize: "9px", fontWeight: 500, letterSpacing: "0.06em",
       padding: "2px 6px", borderRadius: "4px", whiteSpace: "nowrap" as const,
       background: bg, color: text,
@@ -165,18 +165,18 @@ export default function LandingPage() {
         <div style={{ maxWidth: 1120, margin: "0 auto", padding: "0 32px", width: "100%", display: "flex", alignItems: "center", gap: 16 }}>
           <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8 }}>
             <div style={{ width: 28, height: 28, borderRadius: "6px", background: "#1B3A6B", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ fontFamily: "var(--font-syne),Syne,sans-serif", fontSize: "11px", fontWeight: 800, color: "#FFFFFF", letterSpacing: "-0.5px" }}>Cx</span>
+              <span style={{ fontFamily: "var(--font-syne),Lato,sans-serif", fontSize: "11px", fontWeight: 800, color: "#FFFFFF", letterSpacing: "-0.5px" }}>Cx</span>
             </div>
-            <span style={{ fontFamily: "var(--font-dm-sans),'DM Sans',sans-serif", fontSize: "15px", fontWeight: 700, color: "#1B3A6B", letterSpacing: "-0.2px" }}>Anton Cx</span>
+            <span style={{ fontFamily: "var(--font-dm-sans),Lato,sans-serif", fontSize: "15px", fontWeight: 700, color: "#1B3A6B", letterSpacing: "-0.2px" }}>Anton Cx</span>
           </div>
           <nav style={{ display: "flex", gap: 28 }}>
             {["Features", "How It Works", "Payers"].map((l) => (
-              <a key={l} href={`#${l.toLowerCase().replace(/\s+/g, "-")}`} style={{ fontFamily: "var(--font-dm-sans),'DM Sans',sans-serif", fontSize: "13px", color: "#6A7590", textDecoration: "none", fontWeight: 500 }}>{l}</a>
+              <a key={l} href={`#${l.toLowerCase().replace(/\s+/g, "-")}`} style={{ fontFamily: "var(--font-dm-sans),Lato,sans-serif", fontSize: "13px", color: "#6A7590", textDecoration: "none", fontWeight: 500 }}>{l}</a>
             ))}
           </nav>
           <div style={{ flex: 1, display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center" }}>
-            <Link href="/login" style={{ fontFamily: "var(--font-dm-sans),'DM Sans',sans-serif", fontSize: "13px", fontWeight: 500, color: "#6A7590", textDecoration: "none", padding: "6px 14px", borderRadius: "6px", borderWidth: "0.5px", borderStyle: "solid", borderColor: "#E8EBF2", background: "#FFFFFF" }}>Log in</Link>
-            <Link href="/signup" style={{ fontFamily: "var(--font-dm-sans),'DM Sans',sans-serif", fontSize: "13px", fontWeight: 600, color: "#FFFFFF", textDecoration: "none", padding: "6px 16px", borderRadius: "6px", background: "#2E6BE6" }}>Get started</Link>
+            <Link href="/login" style={{ fontFamily: "var(--font-dm-sans),Lato,sans-serif", fontSize: "13px", fontWeight: 500, color: "#6A7590", textDecoration: "none", padding: "6px 14px", borderRadius: "6px", borderWidth: "0.5px", borderStyle: "solid", borderColor: "#E8EBF2", background: "#FFFFFF" }}>Log in</Link>
+            <Link href="/signup" style={{ fontFamily: "var(--font-dm-sans),Lato,sans-serif", fontSize: "13px", fontWeight: 600, color: "#FFFFFF", textDecoration: "none", padding: "6px 16px", borderRadius: "6px", background: "#2E6BE6" }}>Get started</Link>
           </div>
         </div>
       </motion.header>
@@ -184,7 +184,7 @@ export default function LandingPage() {
       {/* HERO */}
       <section ref={heroRef} style={{ maxWidth: 1120, margin: "0 auto", padding: "116px 32px 72px" }}>
         <motion.div initial={{ opacity: 0, y: 10 }} animate={heroInView ? { opacity: 1, y: 0 } : {}} transition={{ ...SPRING }} style={{ marginBottom: 22 }}>
-          <span style={{ fontFamily: "var(--font-dm-mono),'DM Mono',monospace", fontSize: "10px", fontWeight: 500, letterSpacing: "0.1em", color: "#2E6BE6", background: "#EBF0FC", borderWidth: "0.5px", borderStyle: "solid", borderColor: "#C4D4F8", padding: "4px 10px", borderRadius: "4px", display: "inline-block" }}>
+          <span style={{ fontFamily: "var(--font-dm-mono),Lato,sans-serif", fontSize: "10px", fontWeight: 500, letterSpacing: "0.1em", color: "#2E6BE6", background: "#EBF0FC", borderWidth: "0.5px", borderStyle: "solid", borderColor: "#C4D4F8", padding: "4px 10px", borderRadius: "4px", display: "inline-block" }}>
             MEDICAL BENEFIT DRUG POLICY INTELLIGENCE
           </span>
         </motion.div>
@@ -193,7 +193,7 @@ export default function LandingPage() {
         <motion.h1
           initial={{ opacity: 0, y: 14 }} animate={heroInView ? { opacity: 1, y: 0 } : {}}
           transition={{ ...SPRING, delay: stagger(1) }}
-          style={{ fontFamily: "var(--font-dm-sans),'DM Sans',sans-serif", fontSize: "clamp(32px, 4.5vw, 58px)", fontWeight: 800, color: "#0D1C3A", letterSpacing: "-0.8px", lineHeight: 1.08, maxWidth: "900px", margin: "0 0 20px" }}
+          style={{ fontFamily: "var(--font-dm-sans),Lato,sans-serif", fontSize: "clamp(32px, 4.5vw, 58px)", fontWeight: 800, color: "#0D1C3A", letterSpacing: "-0.8px", lineHeight: 1.08, maxWidth: "900px", margin: "0 0 20px" }}
         >
           Every payer policy.
           <br />
@@ -204,7 +204,7 @@ export default function LandingPage() {
         <motion.p
           initial={{ opacity: 0, y: 14 }} animate={heroInView ? { opacity: 1, y: 0 } : {}}
           transition={{ ...SPRING, delay: stagger(2) }}
-          style={{ fontFamily: "var(--font-dm-sans),'DM Sans',sans-serif", fontSize: "clamp(14px, 1.2vw, 17px)", color: "#6A7590", lineHeight: 1.7, maxWidth: "620px", margin: "0 0 36px" }}
+          style={{ fontFamily: "var(--font-dm-sans),Lato,sans-serif", fontSize: "clamp(14px, 1.2vw, 17px)", color: "#6A7590", lineHeight: 1.7, maxWidth: "620px", margin: "0 0 36px" }}
         >
           Anton Cx ingests, normalizes, and tracks clinical policy bulletins from 48+ health plans — giving market access analysts a searchable, comparable, always-current view of drug coverage.
         </motion.p>
@@ -214,8 +214,8 @@ export default function LandingPage() {
           transition={{ ...SPRING, delay: stagger(3) }}
           style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 64 }}
         >
-          <Link href="/signup" style={{ fontFamily: "var(--font-dm-sans),'DM Sans',sans-serif", fontSize: "14px", fontWeight: 600, color: "#FFFFFF", textDecoration: "none", padding: "10px 22px", borderRadius: "7px", background: "#2E6BE6", display: "inline-block" }}>Start for free →</Link>
-          <Link href="/login" style={{ fontFamily: "var(--font-dm-sans),'DM Sans',sans-serif", fontSize: "14px", fontWeight: 500, color: "#6A7590", textDecoration: "none", padding: "10px 18px", borderRadius: "7px", borderWidth: "0.5px", borderStyle: "solid", borderColor: "#E8EBF2", background: "#FFFFFF", display: "inline-block" }}>Log in</Link>
+          <Link href="/signup" style={{ fontFamily: "var(--font-dm-sans),Lato,sans-serif", fontSize: "14px", fontWeight: 600, color: "#FFFFFF", textDecoration: "none", padding: "10px 22px", borderRadius: "7px", background: "#2E6BE6", display: "inline-block" }}>Start for free →</Link>
+          <Link href="/login" style={{ fontFamily: "var(--font-dm-sans),Lato,sans-serif", fontSize: "14px", fontWeight: 500, color: "#6A7590", textDecoration: "none", padding: "10px 18px", borderRadius: "7px", borderWidth: "0.5px", borderStyle: "solid", borderColor: "#E8EBF2", background: "#FFFFFF", display: "inline-block" }}>Log in</Link>
         </motion.div>
 
         {/* Demo table */}
@@ -223,7 +223,7 @@ export default function LandingPage() {
           <Card style={{ overflow: "hidden", boxShadow: "0 4px 28px rgba(13,28,58,0.07)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", borderBottom: "0.5px solid #E8EBF2", background: "#F7F8FC" }}>
               {[1,2,3].map(i => <div key={i} style={{ width: 9, height: 9, borderRadius: "50%", background: "#E8EBF2" }} />)}
-              <span style={{ fontFamily: "var(--font-dm-mono),'DM Mono',monospace", fontSize: "10px", color: "#A0AABB", letterSpacing: "0.05em", marginLeft: 8 }}>COVERAGE OVERVIEW — Q2 2026</span>
+              <span style={{ fontFamily: "var(--font-dm-mono),Lato,sans-serif", fontSize: "10px", color: "#A0AABB", letterSpacing: "0.05em", marginLeft: 8 }}>COVERAGE OVERVIEW — Q2 2026</span>
               <div style={{ flex: 1 }} />
               <TPill label="CHANGED THIS QTR" bg="#FFF4E0" text="#D4880A" border="#F5D898" />
             </div>
@@ -232,7 +232,7 @@ export default function LandingPage() {
                 <thead>
                   <tr style={{ borderBottom: "0.5px solid #E8EBF2" }}>
                     {["DRUG", "AETNA", "UHC", "CIGNA", "BCBS-TX"].map(h => (
-                      <th key={h} style={{ padding: "9px 16px", textAlign: "left", fontFamily: "var(--font-dm-mono),'DM Mono',monospace", fontSize: "9px", fontWeight: 500, letterSpacing: "0.08em", color: "#A0AABB", background: "#F7F8FC" }}>{h}</th>
+                      <th key={h} style={{ padding: "9px 16px", textAlign: "left", fontFamily: "var(--font-dm-mono),Lato,sans-serif", fontSize: "9px", fontWeight: 500, letterSpacing: "0.08em", color: "#A0AABB", background: "#F7F8FC" }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -240,8 +240,8 @@ export default function LandingPage() {
                   {DEMO_ROWS.map((row, i) => (
                     <motion.tr key={row.drug} initial={{ opacity: 0, x: -6 }} animate={heroInView ? { opacity: 1, x: 0 } : {}} transition={{ ...SPRING, delay: 0.3 + stagger(i) }} style={{ borderBottom: "0.5px solid #E8EBF2" }}>
                       <td style={{ padding: "10px 16px" }}>
-                        <span style={{ fontFamily: "var(--font-syne),Syne,sans-serif", fontSize: "13px", fontWeight: 700, color: "#0D1C3A", display: "block" }}>{row.drug}</span>
-                        <span style={{ fontFamily: "var(--font-dm-mono),'DM Mono',monospace", fontSize: "9px", color: "#A0AABB", letterSpacing: "0.05em" }}>{row.jCode}</span>
+                        <span style={{ fontFamily: "var(--font-syne),Lato,sans-serif", fontSize: "13px", fontWeight: 700, color: "#0D1C3A", display: "block" }}>{row.drug}</span>
+                        <span style={{ fontFamily: "var(--font-dm-mono),Lato,sans-serif", fontSize: "9px", color: "#A0AABB", letterSpacing: "0.05em" }}>{row.jCode}</span>
                       </td>
                       {[row.aetna, row.uhc, row.cigna, row.bcbs].map((status, j) => (
                         <td key={j} style={{ padding: "10px 16px" }}><SPill status={status} /></td>
@@ -252,9 +252,9 @@ export default function LandingPage() {
               </table>
             </div>
             <div style={{ padding: "9px 16px", borderTop: "0.5px solid #E8EBF2", background: "#F7F8FC", display: "flex", alignItems: "center" }}>
-              <span style={{ fontFamily: "var(--font-dm-mono),'DM Mono',monospace", fontSize: "9px", color: "#A0AABB", letterSpacing: "0.05em" }}>48 PAYERS · 5 DRUG CLASSES · UPDATED APR 4, 2026</span>
+              <span style={{ fontFamily: "var(--font-dm-mono),Lato,sans-serif", fontSize: "9px", color: "#A0AABB", letterSpacing: "0.05em" }}>48 PAYERS · 5 DRUG CLASSES · UPDATED APR 4, 2026</span>
               <div style={{ flex: 1 }} />
-              <span style={{ fontFamily: "var(--font-dm-mono),'DM Mono',monospace", fontSize: "9px", color: "#2E6BE6", letterSpacing: "0.05em", cursor: "pointer" }}>OPEN IN COMPARE →</span>
+              <span style={{ fontFamily: "var(--font-dm-mono),Lato,sans-serif", fontSize: "9px", color: "#2E6BE6", letterSpacing: "0.05em", cursor: "pointer" }}>OPEN IN COMPARE →</span>
             </div>
           </Card>
         </motion.div>
@@ -265,7 +265,7 @@ export default function LandingPage() {
         <div style={{ display: "flex", animation: "ticker 40s linear infinite", width: "max-content" }}>
           {[...TICKER_ITEMS, ...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
             <span key={i} style={{ display: "inline-flex", alignItems: "center" }}>
-              <span style={{ fontFamily: "var(--font-dm-mono),'DM Mono',monospace", fontSize: "10px", fontWeight: item.type === "payer" ? 600 : 400, letterSpacing: item.type === "payer" ? "0.12em" : "0.06em", color: item.type === "payer" ? "#6A7590" : "#A0AABB", whiteSpace: "nowrap" as const, padding: "0 18px" }}>{item.text}</span>
+              <span style={{ fontFamily: "var(--font-dm-mono),Lato,sans-serif", fontSize: "10px", fontWeight: item.type === "payer" ? 600 : 400, letterSpacing: item.type === "payer" ? "0.12em" : "0.06em", color: item.type === "payer" ? "#6A7590" : "#A0AABB", whiteSpace: "nowrap" as const, padding: "0 18px" }}>{item.text}</span>
               <span style={{ color: "#D0D6E8", fontSize: "8px" }}>·</span>
             </span>
           ))}
@@ -275,13 +275,13 @@ export default function LandingPage() {
       {/* FEATURES */}
       <section id="features" ref={featRef} style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 32px" }}>
         <motion.div initial={{ opacity: 0, y: 10 }} animate={featInView ? { opacity: 1, y: 0 } : {}} transition={{ ...SPRING }}
-          style={{ fontFamily: "var(--font-dm-mono),'DM Mono',monospace", fontSize: "10px", fontWeight: 500, letterSpacing: "0.12em", color: "#A0AABB", marginBottom: 14 }}>
+          style={{ fontFamily: "var(--font-dm-mono),Lato,sans-serif", fontSize: "10px", fontWeight: 500, letterSpacing: "0.12em", color: "#A0AABB", marginBottom: 14 }}>
           WHAT ANTON CX DOES
         </motion.div>
 
         {/* h2 — DM Sans weight 600, pharmaceutical clarity */}
         <motion.h2 initial={{ opacity: 0, y: 10 }} animate={featInView ? { opacity: 1, y: 0 } : {}} transition={{ ...SPRING, delay: stagger(1) }}
-          style={{ fontFamily: "var(--font-dm-sans),'DM Sans',sans-serif", fontSize: "clamp(24px, 3vw, 38px)", fontWeight: 600, color: "#0D1C3A", letterSpacing: "-0.4px", lineHeight: 1.2, marginBottom: 48, maxWidth: "700px" }}>
+          style={{ fontFamily: "var(--font-dm-sans),Lato,sans-serif", fontSize: "clamp(24px, 3vw, 38px)", fontWeight: 600, color: "#0D1C3A", letterSpacing: "-0.4px", lineHeight: 1.2, marginBottom: 48, maxWidth: "700px" }}>
           Built for analysts who can&apos;t afford to be slow.
         </motion.h2>
 
@@ -301,7 +301,7 @@ export default function LandingPage() {
                       style={{ position: "absolute" as const, left: 0, top: 6, bottom: 6, width: 3, borderRadius: 2, background: "#2E6BE6" }} />
                   )}
                   <span style={{ color: active ? "#1B3A6B" : "#A0AABB", display: "flex", flexShrink: 0 }}>{f.icon}</span>
-                  <span style={{ fontFamily: "var(--font-syne),Syne,sans-serif", fontSize: "14px", fontWeight: active ? 700 : 400 }}>{f.label}</span>
+                  <span style={{ fontFamily: "var(--font-syne),Lato,sans-serif", fontSize: "14px", fontWeight: active ? 700 : 400 }}>{f.label}</span>
                 </motion.button>
               );
             })}
@@ -314,16 +314,16 @@ export default function LandingPage() {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20, flexWrap: "wrap", gap: "16px" }}>
                   <TPill label={feat.pill.label} bg={feat.pill.bg} text={feat.pill.text} border={feat.pill.border} />
                   <div style={{ textAlign: "right" as const }}>
-                    <div style={{ fontFamily: "var(--font-syne),Syne,sans-serif", fontSize: "32px", fontWeight: 800, color: "#0D1C3A", lineHeight: 1 }}>{feat.stat}</div>
-                    <div style={{ fontFamily: "var(--font-dm-mono),'DM Mono',monospace", fontSize: "10px", color: "#A0AABB", letterSpacing: "0.06em", marginTop: 4 }}>{feat.statLabel.toUpperCase()}</div>
+                    <div style={{ fontFamily: "var(--font-syne),Lato,sans-serif", fontSize: "32px", fontWeight: 800, color: "#0D1C3A", lineHeight: 1 }}>{feat.stat}</div>
+                    <div style={{ fontFamily: "var(--font-dm-mono),Lato,sans-serif", fontSize: "10px", color: "#A0AABB", letterSpacing: "0.06em", marginTop: 4 }}>{feat.statLabel.toUpperCase()}</div>
                   </div>
                 </div>
                 {/* Feature h3 — DM Sans, clean and clinical */}
-                <h3 style={{ fontFamily: "var(--font-dm-sans),'DM Sans',sans-serif", fontSize: "22px", fontWeight: 600, color: "#0D1C3A", letterSpacing: "-0.3px", marginBottom: 12 }}>{feat.title}</h3>
-                <p style={{ fontFamily: "var(--font-dm-sans),'DM Sans',sans-serif", fontSize: "15px", color: "#6A7590", lineHeight: 1.75, maxWidth: "600px" }}>{feat.desc}</p>
+                <h3 style={{ fontFamily: "var(--font-dm-sans),Lato,sans-serif", fontSize: "22px", fontWeight: 600, color: "#0D1C3A", letterSpacing: "-0.3px", marginBottom: 12 }}>{feat.title}</h3>
+                <p style={{ fontFamily: "var(--font-dm-sans),Lato,sans-serif", fontSize: "15px", color: "#6A7590", lineHeight: 1.75, maxWidth: "600px" }}>{feat.desc}</p>
                 <div style={{ marginTop: 28, paddingTop: 20, borderTop: "0.5px solid #E8EBF2", display: "flex", alignItems: "center", gap: 16 }}>
-                  <Link href="/signup" style={{ fontFamily: "var(--font-dm-sans),'DM Sans',sans-serif", fontSize: "14px", fontWeight: 600, color: "#FFFFFF", textDecoration: "none", padding: "10px 20px", borderRadius: "6px", background: "#2E6BE6" }}>Try it free</Link>
-                  <span style={{ fontFamily: "var(--font-dm-mono),'DM Mono',monospace", fontSize: "10px", color: "#A0AABB", letterSpacing: "0.05em" }}>No credit card required</span>
+                  <Link href="/signup" style={{ fontFamily: "var(--font-dm-sans),Lato,sans-serif", fontSize: "14px", fontWeight: 600, color: "#FFFFFF", textDecoration: "none", padding: "10px 20px", borderRadius: "6px", background: "#2E6BE6" }}>Try it free</Link>
+                  <span style={{ fontFamily: "var(--font-dm-mono),Lato,sans-serif", fontSize: "10px", color: "#A0AABB", letterSpacing: "0.05em" }}>No credit card required</span>
                 </div>
               </Card>
             </motion.div>
@@ -335,21 +335,21 @@ export default function LandingPage() {
       <section id="how-it-works" ref={stepsRef} style={{ background: "#FFFFFF", borderTop: "0.5px solid #E8EBF2", borderBottom: "0.5px solid #E8EBF2", padding: "88px 0" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 32px" }}>
           <motion.div initial={{ opacity: 0, y: 10 }} animate={stepsInView ? { opacity: 1, y: 0 } : {}} transition={{ ...SPRING }}
-            style={{ fontFamily: "var(--font-dm-mono),'DM Mono',monospace", fontSize: "10px", letterSpacing: "0.12em", color: "#A0AABB", marginBottom: 14 }}>
+            style={{ fontFamily: "var(--font-dm-mono),Lato,sans-serif", fontSize: "10px", letterSpacing: "0.12em", color: "#A0AABB", marginBottom: 14 }}>
             HOW IT WORKS
           </motion.div>
           <motion.h2 initial={{ opacity: 0, y: 10 }} animate={stepsInView ? { opacity: 1, y: 0 } : {}} transition={{ ...SPRING, delay: stagger(1) }}
-            style={{ fontFamily: "var(--font-dm-sans),'DM Sans',sans-serif", fontSize: "clamp(24px, 3vw, 38px)", fontWeight: 600, color: "#0D1C3A", letterSpacing: "-0.4px", lineHeight: 1.2, marginBottom: 48, maxWidth: "700px" }}>
+            style={{ fontFamily: "var(--font-dm-sans),Lato,sans-serif", fontSize: "clamp(24px, 3vw, 38px)", fontWeight: 600, color: "#0D1C3A", letterSpacing: "-0.4px", lineHeight: 1.2, marginBottom: 48, maxWidth: "700px" }}>
             From messy PDF to structured intelligence in one upload.
           </motion.h2>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24 }}>
             {STEPS.map((s, i) => (
               <motion.div key={s.step} initial={{ opacity: 0, y: 16 }} animate={stepsInView ? { opacity: 1, y: 0 } : {}} transition={{ ...SPRING, delay: stagger(i + 1) }}>
                 <Card style={{ padding: "28px", height: "100%" }}>
-                  <div style={{ fontFamily: "var(--font-dm-mono),'DM Mono',monospace", fontSize: "11px", fontWeight: 500, letterSpacing: "0.1em", color: "#2E6BE6", marginBottom: 16 }}>{s.step}</div>
+                  <div style={{ fontFamily: "var(--font-dm-mono),Lato,sans-serif", fontSize: "11px", fontWeight: 500, letterSpacing: "0.1em", color: "#2E6BE6", marginBottom: 16 }}>{s.step}</div>
                   <div style={{ width: 32, height: "2px", background: "#2E6BE6", borderRadius: 2, marginBottom: 16, opacity: 0.4 }} />
-                  <h3 style={{ fontFamily: "var(--font-dm-sans),'DM Sans',sans-serif", fontSize: "17px", fontWeight: 600, color: "#0D1C3A", letterSpacing: "-0.2px", marginBottom: 10 }}>{s.title}</h3>
-                  <p style={{ fontFamily: "var(--font-dm-sans),'DM Sans',sans-serif", fontSize: "14px", color: "#6A7590", lineHeight: 1.7 }}>{s.desc}</p>
+                  <h3 style={{ fontFamily: "var(--font-dm-sans),Lato,sans-serif", fontSize: "17px", fontWeight: 600, color: "#0D1C3A", letterSpacing: "-0.2px", marginBottom: 10 }}>{s.title}</h3>
+                  <p style={{ fontFamily: "var(--font-dm-sans),Lato,sans-serif", fontSize: "14px", color: "#6A7590", lineHeight: 1.7 }}>{s.desc}</p>
                 </Card>
               </motion.div>
             ))}
@@ -361,20 +361,20 @@ export default function LandingPage() {
       <section ref={ctaRef} style={{ padding: "88px 32px", textAlign: "center" as const }}>
         <div style={{ maxWidth: 700, margin: "0 auto" }}>
           <motion.div initial={{ opacity: 0, y: 10 }} animate={ctaInView ? { opacity: 1, y: 0 } : {}} transition={{ ...SPRING }} style={{ marginBottom: 16 }}>
-            <span style={{ fontFamily: "var(--font-dm-mono),'DM Mono',monospace", fontSize: "9px", letterSpacing: "0.12em", color: "#A0AABB", background: "#FFFFFF", borderWidth: "0.5px", borderStyle: "solid", borderColor: "#E8EBF2", padding: "3px 10px", borderRadius: "4px", display: "inline-block" }}>START FREE — NO CREDIT CARD</span>
+            <span style={{ fontFamily: "var(--font-dm-mono),Lato,sans-serif", fontSize: "9px", letterSpacing: "0.12em", color: "#A0AABB", background: "#FFFFFF", borderWidth: "0.5px", borderStyle: "solid", borderColor: "#E8EBF2", padding: "3px 10px", borderRadius: "4px", display: "inline-block" }}>START FREE — NO CREDIT CARD</span>
           </motion.div>
           <motion.h2 initial={{ opacity: 0, y: 14 }} animate={ctaInView ? { opacity: 1, y: 0 } : {}} transition={{ ...SPRING, delay: stagger(1) }}
-            style={{ fontFamily: "var(--font-dm-sans),'DM Sans',sans-serif", fontSize: "clamp(26px, 3.5vw, 40px)", fontWeight: 600, color: "#0D1C3A", letterSpacing: "-0.5px", lineHeight: 1.2, marginBottom: 16 }}>
+            style={{ fontFamily: "var(--font-dm-sans),Lato,sans-serif", fontSize: "clamp(26px, 3.5vw, 40px)", fontWeight: 600, color: "#0D1C3A", letterSpacing: "-0.5px", lineHeight: 1.2, marginBottom: 16 }}>
             Stop reading policy PDFs.<br />Start making decisions.
           </motion.h2>
           <motion.p initial={{ opacity: 0, y: 14 }} animate={ctaInView ? { opacity: 1, y: 0 } : {}} transition={{ ...SPRING, delay: stagger(2) }}
-            style={{ fontFamily: "var(--font-dm-sans),'DM Sans',sans-serif", fontSize: "16px", color: "#6A7590", lineHeight: 1.65, marginBottom: 36, maxWidth: "560px", margin: "0 auto 36px" }}>
+            style={{ fontFamily: "var(--font-dm-sans),Lato,sans-serif", fontSize: "16px", color: "#6A7590", lineHeight: 1.65, marginBottom: 36, maxWidth: "560px", margin: "0 auto 36px" }}>
             Join market access teams who use Anton Cx to stay ahead of payer policy changes across 48+ health plans.
           </motion.p>
           <motion.div initial={{ opacity: 0, y: 14 }} animate={ctaInView ? { opacity: 1, y: 0 } : {}} transition={{ ...SPRING, delay: stagger(3) }}
             style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" as const }}>
-            <Link href="/signup" style={{ fontFamily: "var(--font-dm-sans),'DM Sans',sans-serif", fontSize: "15px", fontWeight: 600, color: "#FFFFFF", textDecoration: "none", padding: "14px 32px", borderRadius: "8px", background: "#2E6BE6", display: "inline-block" }}>Create free account →</Link>
-            <Link href="/login" style={{ fontFamily: "var(--font-dm-sans),'DM Sans',sans-serif", fontSize: "15px", fontWeight: 500, color: "#6A7590", textDecoration: "none", padding: "14px 24px", borderRadius: "8px", borderWidth: "0.5px", borderStyle: "solid", borderColor: "#E8EBF2", background: "#FFFFFF", display: "inline-block" }}>Log in</Link>
+            <Link href="/signup" style={{ fontFamily: "var(--font-dm-sans),Lato,sans-serif", fontSize: "15px", fontWeight: 600, color: "#FFFFFF", textDecoration: "none", padding: "14px 32px", borderRadius: "8px", background: "#2E6BE6", display: "inline-block" }}>Create free account →</Link>
+            <Link href="/login" style={{ fontFamily: "var(--font-dm-sans),Lato,sans-serif", fontSize: "15px", fontWeight: 500, color: "#6A7590", textDecoration: "none", padding: "14px 24px", borderRadius: "8px", borderWidth: "0.5px", borderStyle: "solid", borderColor: "#E8EBF2", background: "#FFFFFF", display: "inline-block" }}>Log in</Link>
           </motion.div>
         </div>
       </section>
@@ -384,11 +384,11 @@ export default function LandingPage() {
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 32px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" as const, gap: "16px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ width: 26, height: 26, borderRadius: "6px", background: "#1B3A6B", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ fontFamily: "var(--font-syne),Syne,sans-serif", fontSize: "10px", fontWeight: 800, color: "#FFFFFF" }}>Cx</span>
+              <span style={{ fontFamily: "var(--font-syne),Lato,sans-serif", fontSize: "10px", fontWeight: 800, color: "#FFFFFF" }}>Cx</span>
             </div>
-            <span style={{ fontFamily: "var(--font-dm-sans),'DM Sans',sans-serif", fontSize: "14px", fontWeight: 700, color: "#1B3A6B" }}>Anton Cx</span>
+            <span style={{ fontFamily: "var(--font-dm-sans),Lato,sans-serif", fontSize: "14px", fontWeight: 700, color: "#1B3A6B" }}>Anton Cx</span>
           </div>
-          <span style={{ fontFamily: "var(--font-dm-mono),'DM Mono',monospace", fontSize: "9px", color: "#A0AABB", letterSpacing: "0.05em" }}>© 2026 ANTON RX LLC · MEDICAL BENEFIT DRUG POLICY INTELLIGENCE</span>
+          <span style={{ fontFamily: "var(--font-dm-mono),Lato,sans-serif", fontSize: "9px", color: "#A0AABB", letterSpacing: "0.05em" }}>© 2026 ANTON RX LLC · MEDICAL BENEFIT DRUG POLICY INTELLIGENCE</span>
         </div>
       </footer>
     </div>

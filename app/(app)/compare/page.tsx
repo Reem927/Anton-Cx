@@ -29,7 +29,7 @@ export default function ComparePage() {
       <div className="mb-6">
         <h1
           style={{
-            fontFamily:   "var(--font-syne), Syne, sans-serif",
+            fontFamily:   "var(--font-syne), Lato, sans-serif",
             fontSize:     "22px",
             fontWeight:   800,
             color:        "#0D1C3A",
@@ -40,7 +40,7 @@ export default function ComparePage() {
         </h1>
         <p
           style={{
-            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+            fontFamily: "var(--font-dm-sans), Lato, sans-serif",
             fontSize:   "13px",
             color:      "#6A7590",
           }}

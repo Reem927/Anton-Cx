@@ -52,7 +52,7 @@ function Stat({ label, value, color = "#0D1C3A" }: { label: string; value: numbe
     <div className="flex flex-col gap-[2px]">
       <span
         style={{
-          fontFamily:    "var(--font-dm-mono), 'DM Mono', monospace",
+          fontFamily:    "var(--font-dm-mono), Lato, sans-serif",
           fontSize:      "9px",
           color:         "#A0AABB",
           letterSpacing: "0.08em",
@@ -62,7 +62,7 @@ function Stat({ label, value, color = "#0D1C3A" }: { label: string; value: numbe
       </span>
       <span
         style={{
-          fontFamily: "var(--font-syne), Syne, sans-serif",
+          fontFamily: "var(--font-syne), Lato, sans-serif",
           fontSize:   "20px",
           fontWeight: 800,
           color,

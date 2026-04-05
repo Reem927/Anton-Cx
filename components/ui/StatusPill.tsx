@@ -53,7 +53,7 @@ export function StatusPill({ status, size = "sm" }: StatusPillProps) {
         borderStyle:  "solid",
         borderColor:  cfg.border,
         borderRadius: "4px",
-        fontFamily:   "var(--font-dm-mono), 'DM Mono', monospace",
+        fontFamily:   "var(--font-dm-mono), Lato, sans-serif",
         fontSize,
         fontWeight:   500,
         letterSpacing: "0.06em",
@@ -110,7 +110,7 @@ export function TierPill({ tier, size = "sm" }: TierPillProps) {
     return (
       <span
         style={{
-          fontFamily:   "var(--font-dm-mono), 'DM Mono', monospace",
+          fontFamily:   "var(--font-dm-mono), Lato, sans-serif",
           fontSize:     size === "md" ? "11px" : "9px",
           color:        "#9AA3BB",
           letterSpacing: "0.06em",
@@ -136,7 +136,7 @@ export function TierPill({ tier, size = "sm" }: TierPillProps) {
         borderStyle:  "solid",
         borderColor:  cfg.border,
         borderRadius: "4px",
-        fontFamily:   "var(--font-dm-mono), 'DM Mono', monospace",
+        fontFamily:   "var(--font-dm-mono), Lato, sans-serif",
         fontSize,
         fontWeight:   500,
         letterSpacing: "0.06em",

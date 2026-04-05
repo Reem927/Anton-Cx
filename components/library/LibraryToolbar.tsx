@@ -53,7 +53,7 @@ const selectStyle: React.CSSProperties = {
   borderColor:   "#E8EBF2",
   borderRadius:  "7px",
   padding:       "5px 10px",
-  fontFamily:    "var(--font-dm-sans), 'DM Sans', sans-serif",
+  fontFamily:    "var(--font-dm-sans), Lato, sans-serif",
   fontSize:      "12px",
   color:         "#1B3A6B",
   outline:       "none",
@@ -79,7 +79,7 @@ export function LibraryToolbar({
           borderColor:  "#E8EBF2",
           borderRadius: "7px",
           padding:      "5px 12px",
-          fontFamily:   "var(--font-dm-sans), 'DM Sans', sans-serif",
+          fontFamily:   "var(--font-dm-sans), Lato, sans-serif",
           fontSize:     "12px",
           color:        "#1B3A6B",
           outline:      "none",
@@ -122,7 +122,7 @@ export function LibraryToolbar({
 
         <span
           style={{
-            fontFamily: "var(--font-dm-mono), 'DM Mono', monospace",
+            fontFamily: "var(--font-dm-mono), Lato, sans-serif",
             fontSize:   "12px",
             color:      "#9AA3BB",
             whiteSpace: "nowrap",
@@ -147,7 +147,7 @@ export function LibraryToolbar({
                   borderRadius: "5px",
                   border:       cols === n ? "0.5px solid #C4D4F8" : "0.5px solid transparent",
                   background:   cols === n ? "#EBF0FC" : "transparent",
-                  fontFamily:   "var(--font-dm-mono), 'DM Mono', monospace",
+                  fontFamily:   "var(--font-dm-mono), Lato, sans-serif",
                   fontSize:     "11px",
                   fontWeight:   cols === n ? 700 : 400,
                   color:        cols === n ? "#1B3A6B" : "#9AA3BB",

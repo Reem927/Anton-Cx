@@ -56,7 +56,7 @@ export default function SearchPage() {
       <div className="mb-6">
         <h1
           style={{
-            fontFamily:   "var(--font-syne), Syne, sans-serif",
+            fontFamily:   "var(--font-syne), Lato, sans-serif",
             fontSize:     "22px",
             fontWeight:   800,
             color:        "#0D1C3A",
@@ -67,7 +67,7 @@ export default function SearchPage() {
         </h1>
         <p
           style={{
-            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+            fontFamily: "var(--font-dm-sans), Lato, sans-serif",
             fontSize:   "13px",
             color:      "#6A7590",
           }}
@@ -89,7 +89,7 @@ export default function SearchPage() {
       <div
         className="mb-3"
         style={{
-          fontFamily:    "var(--font-dm-mono), 'DM Mono', monospace",
+          fontFamily:    "var(--font-dm-mono), Lato, sans-serif",
           fontSize:      "10px",
           color:         "#A0AABB",
           letterSpacing: "0.06em",
@@ -107,7 +107,7 @@ export default function SearchPage() {
           <div
             className="py-12 text-center"
             style={{
-              fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+              fontFamily: "var(--font-dm-sans), Lato, sans-serif",
               fontSize:   "14px",
               color:      "#A0AABB",
             }}
@@ -124,7 +124,7 @@ export default function SearchPage() {
             key={action}
             className="rounded px-4 py-2 transition-colors"
             style={{
-              fontFamily:    "var(--font-dm-sans), 'DM Sans', sans-serif",
+              fontFamily:    "var(--font-dm-sans), Lato, sans-serif",
               fontSize:      "13px",
               fontWeight:    500,
               background:    action === config.actions[0] ? "#2E6BE6" : "#FFFFFF",

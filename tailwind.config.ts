@@ -9,9 +9,10 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        syne: ["Syne", "sans-serif"],
-        "dm-sans": ["DM Sans", "sans-serif"],
-        "dm-mono": ["DM Mono", "monospace"],
+        syne: ["Lato", "sans-serif"],
+        "dm-sans": ["Lato", "sans-serif"],
+        "dm-mono": ["Lato", "sans-serif"],
+        lato: ["Lato", "sans-serif"],
       },
       colors: {
         navy: "#1B3A6B",

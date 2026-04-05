@@ -153,7 +153,7 @@ export function Sidebar({ expanded, onToggle }: SidebarProps) {
         >
           <span
             style={{
-              fontFamily: "var(--font-syne), Syne, sans-serif",
+              fontFamily: "var(--font-syne), Lato, sans-serif",
               fontSize: "12px",
               fontWeight: 700,
               color: "#FFFFFF",
@@ -173,7 +173,7 @@ export function Sidebar({ expanded, onToggle }: SidebarProps) {
             >
               <p
                 style={{
-                  fontFamily: "var(--font-syne), Syne, sans-serif",
+                  fontFamily: "var(--font-syne), Lato, sans-serif",
                   fontSize: "12px",
                   fontWeight: 700,
                   color: "#0D1C3A",
@@ -184,7 +184,7 @@ export function Sidebar({ expanded, onToggle }: SidebarProps) {
               </p>
               <p
                 style={{
-                  fontFamily: "var(--font-dm-mono), 'DM Mono', monospace",
+                  fontFamily: "var(--font-dm-mono), Lato, sans-serif",
                   fontSize: "9px",
                   color: "#A0AABB",
                   margin: 0,
@@ -222,7 +222,7 @@ function NavGroup({
             transition={{ duration: 0.12 }}
             className="px-[14px] mb-1"
             style={{
-              fontFamily:    "var(--font-dm-mono), 'DM Mono', monospace",
+              fontFamily:    "var(--font-dm-mono), Lato, sans-serif",
               fontSize:      "9px",
               fontWeight:    500,
               letterSpacing: "0.08em",
@@ -298,7 +298,7 @@ function NavItem({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.12 }}
             style={{
-              fontFamily:  "var(--font-syne), Syne, sans-serif",
+              fontFamily:  "var(--font-syne), Lato, sans-serif",
               fontSize:    "13px",
               fontWeight:  active ? 700 : 400,
               whiteSpace:  "nowrap",
