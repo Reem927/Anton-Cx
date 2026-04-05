@@ -242,7 +242,6 @@ function SplitDiffPanel({ chg }: { chg: PolicyChange }) {
             {chg.prev_pdf_url && (
               <button style={{ fontFamily: "var(--font-dm-sans),'DM Sans',sans-serif", fontSize: "12px", fontWeight: 500, color: "#6A7590", background: "#FFFFFF", borderWidth: "0.5px", borderStyle: "solid", borderColor: "#E8EBF2", borderRadius: "6px", padding: "6px 14px", cursor: "pointer" }}>↓ Old PDF</button>
             )}
-            <Link href="/compare" style={{ fontFamily: "var(--font-dm-sans),'DM Sans',sans-serif", fontSize: "12px", fontWeight: 500, color: "#6A7590", textDecoration: "none", background: "#FFFFFF", borderWidth: "0.5px", borderStyle: "solid", borderColor: "#E8EBF2", borderRadius: "6px", padding: "6px 14px" }}>Compare →</Link>
           </div>
         </div>
       </div>
