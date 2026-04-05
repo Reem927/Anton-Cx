@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const PAYERS = ["UnitedHealthcare", "Cigna", "BCBS NC", "UPMC", "Priority Health", "EmblemHealth", "Florida Blue"];
 
@@ -76,36 +76,107 @@ function CoverageCard({ payer, status, tier, badge }: { payer: string; status: s
 }
 
 function TypingText({ text, onDone }: { text: string; onDone?: () => void }) {
-  const [displayed, setDisplayed] = useState(text);
-  const idx = useRef(text.length);
-  const doneRef = useRef(false);
+  const [displayed, setDisplayed] = useState("");
+  const stateRef = useRef({ idx: 0, done: false, interval: 0 });
 
   useEffect(() => {
-    doneRef.current = false;
-    idx.current = 0;
+    stateRef.current.idx = 0;
+    stateRef.current.done = false;
+    clearInterval(stateRef.current.interval);
     setDisplayed("");
 
-    const interval = setInterval(() => {
-      if (doneRef.current) {
-        clearInterval(interval);
-        return;
-      }
-      idx.current++;
-      setDisplayed(text.slice(0, idx.current));
-      if (idx.current >= text.length) {
-        doneRef.current = true;
-        clearInterval(interval);
+    stateRef.current.interval = window.setInterval(() => {
+      stateRef.current.idx++;
+      const next = text.slice(0, stateRef.current.idx);
+      setDisplayed(next);
+      if (stateRef.current.idx >= text.length) {
+        clearInterval(stateRef.current.interval);
+        stateRef.current.done = true;
         onDone && onDone();
       }
     }, 8);
 
-    return () => {
-      doneRef.current = true;
-      clearInterval(interval);
-    };
-  }, [text, onDone]);
+    return () => clearInterval(stateRef.current.interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [text]);
 
   return <span>{displayed}</span>;
+}
+
+function AnswerBlock({ result, onFollowUp }: { result: typeof MOCK_RESULTS.default; onFollowUp: (q: string) => void }) {
+  const [done, setDone] = useState(false);
+  return (
+    <div>
+      <div style={{ marginBottom: 28 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+          <div style={{ background: "#EBF0FC", border: "0.5px solid #2E6BE6", borderRadius: 6, padding: "3px 10px", fontSize: 11, fontFamily: "'DM Mono', monospace", color: "#2E6BE6", fontWeight: 500 }}>AI Answer</div>
+          <div style={{ background: "#F7F8FC", border: "0.5px solid #E8EBF2", borderRadius: 6, padding: "3px 10px", fontSize: 11, fontFamily: "'DM Mono', monospace", color: "#A0AABB" }}>Medical Benefit · Oncology</div>
+        </div>
+        <p style={{ fontSize: 15, lineHeight: 1.75, color: "#0D1C3A", margin: "0 0 14px" }}>
+          <TypingText text={result.answer} onDone={() => setDone(true)} />
+        </p>
+        {done && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#6A7590", fontFamily: "'DM Mono', monospace" }}>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <rect x="1" y="1" width="12" height="12" rx="3" stroke="#A0AABB" strokeWidth="0.8"/>
+              <path d="M4 7l2 2 4-4" stroke="#2E6BE6" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <a href={result.sourceUrl} style={{ color: "#2E6BE6", textDecoration: "none" }}>{result.source}</a>
+          </div>
+        )}
+      </div>
+
+      {done && (
+        <div style={{ marginBottom: 28 }}>
+          <div style={{ fontSize: 12, fontFamily: "'DM Mono', monospace", color: "#A0AABB", marginBottom: 10, letterSpacing: "0.05em" }}>COVERAGE ACROSS PAYERS</div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {result.coverageStates.map(c => <CoverageCard key={c.payer} {...c} />)}
+          </div>
+        </div>
+      )}
+
+      {done && (
+        <div style={{ marginBottom: 28 }}>
+          <div style={{ fontSize: 12, fontFamily: "'DM Mono', monospace", color: "#A0AABB", marginBottom: 10, letterSpacing: "0.05em" }}>SUGGESTED FOLLOW-UPS</div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {result.followUps.map(q => (
+              <button key={q} onClick={() => onFollowUp(q)} style={{ background: "#F7F8FC", border: "0.5px solid #E8EBF2", borderRadius: 20, padding: "7px 14px", fontSize: 12, color: "#2E6BE6", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+                {q} →
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {done && <div style={{ borderTop: "0.5px solid #E8EBF2", margin: "8px 0 24px" }} />}
+
+      {done && (
+        <div>
+          <div style={{ fontSize: 12, fontFamily: "'DM Mono', monospace", color: "#A0AABB", marginBottom: 14, letterSpacing: "0.05em" }}>
+            SOURCE POLICIES — {result.policies.length} DOCUMENTS
+          </div>
+          {result.policies.map((pol, i) => (
+            <div key={i} style={{ background: "#FFFFFF", border: "0.5px solid #E8EBF2", borderRadius: 10, padding: "14px 16px", marginBottom: 8, display: "flex", alignItems: "center", gap: 14, cursor: "pointer", transition: "border-color 0.15s" }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = "#2E6BE6"}
+              onMouseLeave={e => e.currentTarget.style.borderColor = "#E8EBF2"}
+            >
+              <div style={{ width: 36, height: 36, borderRadius: 8, background: "#EBF0FC", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <rect x="2" y="1" width="10" height="13" rx="2" stroke="#2E6BE6" strokeWidth="1"/>
+                  <path d="M5 5h5M5 8h5M5 11h3" stroke="#2E6BE6" strokeWidth="0.8" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 500, color: "#0D1C3A", marginBottom: 2 }}>{pol.drug}</div>
+                <div style={{ fontSize: 12, color: "#6A7590", fontFamily: "'DM Mono', monospace" }}>{pol.payer} · {pol.type} · {pol.date} · {pol.pages}p</div>
+              </div>
+              <div style={{ background: "#F7F8FC", border: "0.5px solid #E8EBF2", borderRadius: 6, padding: "4px 10px", fontSize: 11, color: "#6A7590", fontFamily: "'DM Mono', monospace", flexShrink: 0 }}>PDF</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function PolicySearch() {
@@ -113,8 +184,6 @@ export default function PolicySearch() {
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [answerDone, setAnswerDone] = useState(false);
-  const [showPolicies, setShowPolicies] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const result = MOCK_RESULTS.default;
@@ -130,8 +199,6 @@ export default function PolicySearch() {
     if (!text.trim()) return;
     setQuery(text);
     setSearched(false);
-    setAnswerDone(false);
-    setShowPolicies(false);
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
@@ -150,7 +217,8 @@ export default function PolicySearch() {
       minHeight: "100vh",
       padding: "0 0 60px",
     }}>
-      {/* Top search zone */}
+      <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
       <div style={{
         background: "#FFFFFF",
         borderBottom: "0.5px solid #E8EBF2",
@@ -182,7 +250,6 @@ export default function PolicySearch() {
           </div>
         )}
 
-        {/* Search bar */}
         <div style={{
           maxWidth: 720,
           margin: "0 auto",
@@ -236,7 +303,6 @@ export default function PolicySearch() {
             >Search</button>
           </div>
 
-          {/* Payer filter pills */}
           <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap", justifyContent: searched ? "flex-start" : "center" }}>
             {PAYERS.map(p => (
               <button
@@ -258,7 +324,6 @@ export default function PolicySearch() {
           </div>
         </div>
 
-        {/* Example questions (empty state) */}
         {!searched && !loading && (
           <div style={{ maxWidth: 720, margin: "28px auto 0", display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
             {EXAMPLE_QUESTIONS.map(q => (
@@ -286,7 +351,6 @@ export default function PolicySearch() {
         )}
       </div>
 
-      {/* Loading state */}
       {loading && (
         <div style={{ maxWidth: 720, margin: "48px auto", padding: "0 32px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -304,160 +368,13 @@ export default function PolicySearch() {
         </div>
       )}
 
-      {/* Results */}
       {searched && !loading && (
         <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 32px 0" }}>
-
-          {/* Zone 2 — AI Answer */}
-          <div style={{ marginBottom: 28 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-              <div style={{
-                background: "#EBF0FC",
-                border: "0.5px solid #2E6BE6",
-                borderRadius: 6,
-                padding: "3px 10px",
-                fontSize: 11,
-                fontFamily: "'DM Mono', monospace",
-                color: "#2E6BE6",
-                fontWeight: 500,
-              }}>AI Answer</div>
-              <div style={{
-                background: "#F7F8FC",
-                border: "0.5px solid #E8EBF2",
-                borderRadius: 6,
-                padding: "3px 10px",
-                fontSize: 11,
-                fontFamily: "'DM Mono', monospace",
-                color: "#A0AABB",
-              }}>Medical Benefit · Oncology</div>
-            </div>
-
-            <p style={{
-              fontSize: 15,
-              lineHeight: 1.75,
-              color: "#0D1C3A",
-              margin: "0 0 14px",
-            }}>
-              <TypingText text={result.answer} onDone={() => setAnswerDone(true)} />
-            </p>
-
-            {answerDone && (
-              <div style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                fontSize: 12,
-                color: "#6A7590",
-                fontFamily: "'DM Mono', monospace",
-              }}>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <rect x="1" y="1" width="12" height="12" rx="3" stroke="#A0AABB" strokeWidth="0.8"/>
-                  <path d="M4 7l2 2 4-4" stroke="#2E6BE6" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <a href={result.sourceUrl} style={{ color: "#2E6BE6", textDecoration: "none" }}>{result.source}</a>
-              </div>
-            )}
-          </div>
-
-          {/* Coverage state cards — auto-appears after answer */}
-          {answerDone && (
-            <div style={{ marginBottom: 28 }}>
-              <div style={{ fontSize: 12, fontFamily: "'DM Mono', monospace", color: "#A0AABB", marginBottom: 10, letterSpacing: "0.05em" }}>
-                COVERAGE ACROSS PAYERS
-              </div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {result.coverageStates.map(c => (
-                  <CoverageCard key={c.payer} {...c} />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Follow-up suggestions */}
-          {answerDone && (
-            <div style={{ marginBottom: 28 }}>
-              <div style={{ fontSize: 12, fontFamily: "'DM Mono', monospace", color: "#A0AABB", marginBottom: 10, letterSpacing: "0.05em" }}>
-                SUGGESTED FOLLOW-UPS
-              </div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {result.followUps.map(q => (
-                  <button
-                    key={q}
-                    onClick={() => { setQuery(q); handleSearch(q); }}
-                    style={{
-                      background: "#F7F8FC",
-                      border: "0.5px solid #E8EBF2",
-                      borderRadius: 20,
-                      padding: "7px 14px",
-                      fontSize: 12,
-                      color: "#2E6BE6",
-                      cursor: "pointer",
-                      fontFamily: "'DM Sans', sans-serif",
-                    }}
-                  >{q} →</button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Divider */}
-          {answerDone && (
-            <div style={{ borderTop: "0.5px solid #E8EBF2", margin: "8px 0 24px" }} />
-          )}
-
-          {/* Zone 3 — Policy Links */}
-          {answerDone && (
-            <div>
-              <div style={{ fontSize: 12, fontFamily: "'DM Mono', monospace", color: "#A0AABB", marginBottom: 14, letterSpacing: "0.05em" }}>
-                SOURCE POLICIES — {result.policies.length} DOCUMENTS
-              </div>
-              {result.policies.map((pol, i) => (
-                <div key={i} style={{
-                  background: "#FFFFFF",
-                  border: "0.5px solid #E8EBF2",
-                  borderRadius: 10,
-                  padding: "14px 16px",
-                  marginBottom: 8,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 14,
-                  cursor: "pointer",
-                  transition: "border-color 0.15s",
-                }}
-                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = "#2E6BE6"}
-                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = "#E8EBF2"}
-                >
-                  <div style={{
-                    width: 36, height: 36, borderRadius: 8,
-                    background: "#EBF0FC",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    flexShrink: 0,
-                  }}>
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <rect x="2" y="1" width="10" height="13" rx="2" stroke="#2E6BE6" strokeWidth="1"/>
-                      <path d="M5 5h5M5 8h5M5 11h3" stroke="#2E6BE6" strokeWidth="0.8" strokeLinecap="round"/>
-                    </svg>
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14, fontWeight: 500, color: "#0D1C3A", marginBottom: 2 }}>{pol.drug}</div>
-                    <div style={{ fontSize: 12, color: "#6A7590", fontFamily: "'DM Mono', monospace" }}>
-                      {pol.payer} · {pol.type} · {pol.date} · {pol.pages}p
-                    </div>
-                  </div>
-                  <div style={{
-                    background: "#F7F8FC",
-                    border: "0.5px solid #E8EBF2",
-                    borderRadius: 6,
-                    padding: "4px 10px",
-                    fontSize: 11,
-                    color: "#6A7590",
-                    fontFamily: "'DM Mono', monospace",
-                    flexShrink: 0,
-                  }}>PDF</div>
-                </div>
-              ))}
-            </div>
-          )}
+          <AnswerBlock
+            key={query}
+            result={result}
+            onFollowUp={(q) => { setQuery(q); handleSearch(q); }}
+          />
         </div>
       )}
     </div>
