@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { extractPolicyFromPdf } from '@/lib/extraction';
+import { extractFromPdf } from '@/lib/extraction';
 import { supabase } from '@/lib/supabase';
 import { getChangedFields } from '@/lib/diff';
 import type { PolicyDocument } from '@/lib/types';
@@ -19,21 +19,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const extracted = await extractPolicyFromPdf(body.pdf, body.payer_id, body.drug_name);
+    // Legacy route — calls new extraction engine, returns medical policy
+    const result = await extractFromPdf(body.pdf, body.payer_id, body.drug_name, 'pdf_upload');
+    const extracted = result.medical_policy;
+    if (!extracted) {
+      return NextResponse.json({ error: 'No medical policy extracted' }, { status: 422 });
+    }
 
     // Look for a previous version to diff against
     const { data: prev } = await supabase
       .from('policy_documents')
       .select('*')
       .eq('payer_id', body.payer_id)
-      .eq('drug_id', extracted.drug_id)
+      .eq('drug_generic', extracted.drug_generic)
       .order('effective_date', { ascending: false })
       .limit(1)
       .single();
 
     let changedFields: string[] = [];
     if (prev) {
-      changedFields = getChangedFields(prev as unknown as PolicyDocument, extracted);
+      changedFields = getChangedFields(prev as unknown as PolicyDocument, extracted as unknown as PolicyDocument);
     }
 
     const toSave = { ...extracted, changed_fields: changedFields };

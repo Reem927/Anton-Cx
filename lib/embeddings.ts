@@ -1,5 +1,6 @@
 // ── Reem: Chunking + Embedding generation + pgvector storage ──────
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { claude, CLAUDE_MODEL } from "./ai";
 import { supabase } from "./supabase";
 

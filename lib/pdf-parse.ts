@@ -1,5 +1,6 @@
 // ── Reem: PDF ingestion (text parse + URL fetch + Vision fallback) ─
 
+// @ts-expect-error — pdf-parse lacks proper ESM default export typings
 import pdf from "pdf-parse";
 import { claude, CLAUDE_MODEL } from "./ai";
 
