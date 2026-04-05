@@ -39,7 +39,8 @@ export function UserMenu({ expanded }: Props) {
           alignItems:  "center",
           gap:         "10px",
           width:       "100%",
-          padding:     "10px 12px",
+          padding:     "10px 6px",
+          justifyContent: "center",
           border:      "none",
           background:  open ? "#F0F4FB" : "transparent",
           cursor:      "pointer",
@@ -103,14 +104,14 @@ export function UserMenu({ expanded }: Props) {
         </AnimatePresence>
       </button>
 
-      {/* Dropdown — opens upward */}
+      {/* Dropdown — opens upward; shifts right when sidebar is collapsed */}
       {open && (
         <div
           style={{
             position:    "absolute",
             bottom:      "calc(100% + 8px)",
-            left:        "8px",
-            right:       "8px",
+            left:        expanded ? "8px" : "0px",
+            ...(expanded ? { right: "8px" } : {}),
             background:  "#FFFFFF",
             borderWidth: "0.5px",
             borderStyle: "solid",
@@ -174,7 +175,7 @@ export function UserMenu({ expanded }: Props) {
           <DropdownItem label="Account Profile" href="/settings?section=profile" onClose={() => setOpen(false)}>
             <ProfileIcon />
           </DropdownItem>
-          <DropdownItem label="Settings" href="/settings" onClose={() => setOpen(false)}>
+          <DropdownItem label="Settings" href="/settings?section=account" onClose={() => setOpen(false)}>
             <SettingsIcon />
           </DropdownItem>
 
@@ -184,7 +185,7 @@ export function UserMenu({ expanded }: Props) {
             label="Log out"
             danger
             onClose={() => setOpen(false)}
-            onClick={() => router.push("/login")}
+            onClick={() => router.push("/")}
           >
             <LogOutIcon />
           </DropdownItem>
