@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { TopBar } from "@/components/shell/TopBar";
 import { Sidebar } from "@/components/shell/Sidebar";
 import { PersonaProvider, usePersona } from "@/lib/persona-context";
+import { OnboardingOverlay } from "@/components/onboarding/onboarding-overlay";
 
 
 const SIDEBAR_KEY = "anton-cx-sidebar";
@@ -62,6 +63,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <PersonaProvider>
       <AppShell>{children}</AppShell>
+      <OnboardingOverlay />
     </PersonaProvider>
   );
 }
