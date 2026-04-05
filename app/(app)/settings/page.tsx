@@ -1,8 +1,9 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePersona } from "@/lib/persona-context";
+import { createClient } from "@/lib/supabase-browser";
 import type { Persona } from "@/lib/types";
 
 const MOCK_USER = {
@@ -41,6 +42,7 @@ function SettingsPageContent() {
   const initialSection            = (searchParams.get("section") as SectionId | null) ?? "profile";
   const [section, setSection]     = useState<SectionId>(initialSection);
   const { persona, setPersona }   = usePersona();
+  const supabase                  = useMemo(() => createClient(), []);
 
   const [name,  setName]  = useState(MOCK_USER.name);
   const [org,   setOrg]   = useState(MOCK_USER.organization);
@@ -309,7 +311,7 @@ function SettingsPageContent() {
             <SettingsCard title="Session" hideSave>
               <FieldRow label="Sign out" last>
                 <button
-                  onClick={() => router.push("/")}
+                  onClick={async () => { await supabase.auth.signOut(); router.push("/"); router.refresh(); }}
                   style={{
                     fontFamily:   "var(--font-dm-sans), 'DM Sans', sans-serif",
                     fontSize:     "13px",

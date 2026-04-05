@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase-browser";
 
 const MOCK_USER = {
   name:     "Anton Rx",
@@ -20,6 +21,7 @@ export function UserMenu({ expanded }: Props) {
   const [open, setOpen] = useState(false);
   const ref             = useRef<HTMLDivElement>(null);
   const router          = useRouter();
+  const supabase        = useMemo(() => createClient(), []);
 
   useEffect(() => {
     function onDown(e: MouseEvent) {
@@ -185,7 +187,7 @@ export function UserMenu({ expanded }: Props) {
             label="Log out"
             danger
             onClose={() => setOpen(false)}
-            onClick={() => router.push("/")}
+            onClick={async () => { await supabase.auth.signOut(); router.push("/"); router.refresh(); }}
           >
             <LogOutIcon />
           </DropdownItem>
