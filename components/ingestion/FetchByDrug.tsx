@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { DEMO_PAYERS } from "./constants";
+import { cacheInvalidateAll } from "@/lib/cache";
 import type { IngestionStage } from "./IngestionProgress";
 import { IngestionProgress } from "./IngestionProgress";
 
@@ -112,6 +113,7 @@ export function FetchByDrug({ onStageChange }: FetchByDrugProps) {
       await delay(400);
 
       if (totalAdded > 0) {
+        cacheInvalidateAll(); // Clear stale cache so dashboard/library show fresh data
         updateStage("success");
       } else {
         setError(errors.length > 0 ? errors.join("; ") : "No policies found");
