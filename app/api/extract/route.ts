@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     const { data: saved, error } = await supabase
       .from('policy_documents')
-      .upsert(toSave, { onConflict: 'payer_id,drug_id,effective_date' })
+      .upsert(toSave, { onConflict: 'user_id,payer_id,drug_id' })
       .select()
       .single();
 

@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
+import { cacheInvalidateAll } from "@/lib/cache";
 import type { IngestionStage } from "./IngestionProgress";
 import { IngestionProgress } from "./IngestionProgress";
 
@@ -59,6 +60,7 @@ export function PasteURL({ onStageChange }: PasteURLProps) {
 
       updateStage("saving");
       await delay(500);
+      cacheInvalidateAll();
       updateStage("success");
     } catch (err) {
       setError(err instanceof Error ? err.message : "URL fetch failed");

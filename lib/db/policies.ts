@@ -46,7 +46,7 @@ export async function saveMedicalPolicy(supabase: SupabaseClient, policy: Medica
         flags:                 policy.flags,
         changed_fields:        policy.changed_fields,
       },
-      { onConflict: 'payer_id,drug_generic,effective_date' }
+      { onConflict: 'user_id,payer_id,drug_generic' }
     )
     .select()
     .single();
@@ -81,7 +81,7 @@ export async function savePharmacyPolicy(supabase: SupabaseClient, policy: Pharm
         policy_version:        policy.policy_version,
         notes:                 policy.notes,
       },
-      { onConflict: 'payer_id,drug_generic,effective_date' }
+      { onConflict: 'user_id,payer_id,drug_generic' }
     )
     .select()
     .single();
