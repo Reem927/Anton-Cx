@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect } from "react";
+import { useProfile } from "./profile-context";
 import type { Persona } from "./types";
 
 interface PersonaContextValue {
@@ -13,21 +14,21 @@ const PersonaContext = createContext<PersonaContextValue>({
   setPersona: () => {},
 });
 
-const PERSONA_KEY = "anton-cx-persona";
-
 export function PersonaProvider({ children }: { children: React.ReactNode }) {
+  const { profile, updateProfile } = useProfile();
   const [persona, setPersonaState] = useState<Persona>("analyst");
 
+  // Sync from profile when it loads
   useEffect(() => {
-    const stored = sessionStorage.getItem(PERSONA_KEY) as Persona | null;
-    if (stored && ["analyst", "mfr", "plan"].includes(stored)) {
-      setPersonaState(stored);
+    if (profile?.default_persona) {
+      setPersonaState(profile.default_persona);
     }
-  }, []);
+  }, [profile?.default_persona]);
 
   const setPersona = (p: Persona) => {
-    sessionStorage.setItem(PERSONA_KEY, p);
     setPersonaState(p);
+    // Persist to Supabase in the background
+    updateProfile({ default_persona: p });
   };
 
   return (

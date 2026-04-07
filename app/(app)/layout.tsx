@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { TopBar } from "@/components/shell/TopBar";
 import { Sidebar } from "@/components/shell/Sidebar";
+import { ProfileProvider } from "@/lib/profile-context";
 import { PersonaProvider, usePersona } from "@/lib/persona-context";
 import { OnboardingOverlay } from "@/components/onboarding/onboarding-overlay";
 
@@ -61,9 +62,11 @@ function AppShell({ children }: { children: React.ReactNode }) {
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <PersonaProvider>
-      <AppShell>{children}</AppShell>
-      <OnboardingOverlay />
-    </PersonaProvider>
+    <ProfileProvider>
+      <PersonaProvider>
+        <AppShell>{children}</AppShell>
+        <OnboardingOverlay />
+      </PersonaProvider>
+    </ProfileProvider>
   );
 }

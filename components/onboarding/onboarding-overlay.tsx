@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { createClient } from "@/lib/supabase-browser";
+import { useProfile } from "@/lib/profile-context";
 
 const SLIDES = [
   {
     title: "Welcome to Anton Cx",
     description:
-      "Your centralized intelligence platform for medical benefit drug clinical policy documents across 48+ payers.",
+      "Your centralized intelligence platform for medical benefit drug clinical policy documents. We currently cover 7 major payers — with more being added soon.",
     icon: <WelcomeIcon />,
   },
   {
@@ -30,7 +30,7 @@ const SLIDES = [
     icon: <SearchIcon />,
   },
   {
-    title: "You\'re all set!",
+    title: "You're all set!",
     description:
       "Head to the Dashboard to get started. You can always revisit features from the sidebar.",
     icon: <ReadyIcon />,
@@ -38,44 +38,17 @@ const SLIDES = [
 ];
 
 export function OnboardingOverlay() {
-  const supabase = useMemo(() => createClient(), []);
-  const [show, setShow]       = useState(false);
-  const [slide, setSlide]     = useState(0);
-  const [userId, setUserId]   = useState<string | null>(null);
-  const [checked, setChecked] = useState(false);
-
-  useEffect(() => {
-    async function check() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setChecked(true); return; }
-
-      setUserId(user.id);
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("onboarding_completed")
-        .eq("id", user.id)
-        .single();
-
-      if (profile && !profile.onboarding_completed) {
-        setShow(true);
-      }
-      setChecked(true);
-    }
-    check();
-  }, [supabase]);
+  const { profile, loading, updateProfile } = useProfile();
+  const [show, setShow]   = useState(true);
+  const [slide, setSlide] = useState(0);
 
   const complete = useCallback(async () => {
     setShow(false);
-    if (userId) {
-      await supabase
-        .from("profiles")
-        .update({ onboarding_completed: true })
-        .eq("id", userId);
-    }
-  }, [supabase, userId]);
+    await updateProfile({ onboarding_completed: true });
+  }, [updateProfile]);
 
-  if (!checked || !show) return null;
+  // Don't render while loading, if no profile, or if onboarding is already done
+  if (loading || !profile || profile.onboarding_completed || !show) return null;
 
   const isLast = slide === SLIDES.length - 1;
   const current = SLIDES[slide];

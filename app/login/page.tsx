@@ -47,6 +47,9 @@ function LoginPageContent() {
       return;
     }
 
+    // Ensure profile exists (handles pre-trigger users)
+    try { await fetch("/api/profile"); } catch {}
+
     router.push("/dashboard");
     router.refresh();
   }
