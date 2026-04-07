@@ -23,42 +23,23 @@ const SEVERITY_COLOR: Record<AlertSeverity, string> = {
   low:    "#0F7A40",
 };
 
-const DEMO_ALERTS: Alert[] = [
-  {
-    id:         "1",
-    severity:   "high",
-    drug_name:  "Humira",
-    payer_id:   "cigna",
-    message:    "Coverage status changed from covered → pa_required",
-    created_at: "2026-04-03T09:14:00Z",
-  },
-  {
-    id:         "2",
-    severity:   "medium",
-    drug_name:  "Keytruda",
-    payer_id:   "aetna",
-    message:    "PA criteria updated — new PD-L1 threshold requirement",
-    created_at: "2026-04-02T14:30:00Z",
-  },
-  {
-    id:         "3",
-    severity:   "medium",
-    drug_name:  "Dupixent",
-    payer_id:   "uhc",
-    message:    "Step therapy drugs list modified",
-    created_at: "2026-04-01T11:00:00Z",
-  },
-  {
-    id:         "4",
-    severity:   "low",
-    drug_name:  "Stelara",
-    payer_id:   "bcbs-tx",
-    message:    "Renewal period updated from 6 months → 12 months",
-    created_at: "2026-03-28T08:45:00Z",
-  },
-];
+export function AlertFeed({ alerts = [] }: Partial<AlertFeedProps>) {
+  if (alerts.length === 0) {
+    return (
+      <div
+        style={{
+          textAlign:  "center",
+          padding:    "32px 16px",
+          fontFamily: "var(--font-dm-sans), Lato, sans-serif",
+          fontSize:   "12px",
+          color:      "#9AA3BB",
+        }}
+      >
+        No alerts yet. Alerts appear when policy changes are detected.
+      </div>
+    );
+  }
 
-export function AlertFeed({ alerts = DEMO_ALERTS }: Partial<AlertFeedProps>) {
   return (
     <motion.ul
       className="flex flex-col"

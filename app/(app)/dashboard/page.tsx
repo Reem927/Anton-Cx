@@ -1,8 +1,10 @@
 "use client";
 
+import { useMemo } from "react";
 import { MetricCards } from "@/components/dashboard/MetricCards";
 import { CoverageTable } from "@/components/dashboard/CoverageTable";
 import { AlertFeed } from "@/components/dashboard/AlertFeed";
+import type { Alert, AlertSeverity } from "@/components/dashboard/AlertFeed";
 import { getPersonaConfig } from "@/lib/persona";
 import { usePersona } from "@/lib/persona-context";
 import { useCachedFetch } from "@/lib/hooks/use-cached-fetch";
@@ -26,6 +28,29 @@ export default function DashboardPage() {
         paRequired:      policies.filter(p => p.prior_auth_required).length,
       }
     : {};
+
+  // Generate real alerts from policies with changed_fields
+  const alerts: Alert[] = useMemo(() => {
+    if (!policies) return [];
+    return policies
+      .filter(p => p.changed_fields.length > 0)
+      .sort((a, b) => new Date(b.extracted_at).getTime() - new Date(a.extracted_at).getTime())
+      .slice(0, 10)
+      .map((p, i) => {
+        const severity: AlertSeverity =
+          p.changed_fields.includes("coverage_status") ? "high" :
+          p.changed_fields.includes("prior_auth_required") || p.changed_fields.includes("step_therapy") ? "medium" :
+          "low";
+        return {
+          id:         `alert-${p.id ?? i}`,
+          severity,
+          drug_name:  p.drug_name,
+          payer_id:   p.payer_id,
+          message:    `Changed: ${p.changed_fields.join(", ")}`,
+          created_at: p.extracted_at,
+        };
+      });
+  }, [policies]);
 
   return (
     <div className="p-6">
@@ -98,7 +123,7 @@ export default function DashboardPage() {
               borderColor: "#E8EBF2",
             }}
           >
-            <AlertFeed />
+            <AlertFeed alerts={alerts} />
           </div>
         </div>
       </div>

@@ -28,17 +28,17 @@ export function MetricCards({ persona, data }: MetricCardsProps) {
   const config = getPersonaConfig(persona);
 
   const VALUES: Record<string, number> = {
-    payersTracked:    data.payersTracked    ?? 48,
-    policiesIndexed:  data.policiesIndexed  ?? 1247,
-    changedThisQtr:   data.changedThisQtr   ?? 83,
-    paRequired:       data.paRequired       ?? 71,
-    payersCovering:   data.payersCovering   ?? 36,
-    openAccess:       data.openAccess       ?? 12,
-    biosimilarExposed: data.biosimilarExposed ?? 8,
-    drugsBenchmarked: data.drugsBenchmarked ?? 127,
-    moreRestrictive:  data.moreRestrictive  ?? 14,
-    morePermissive:   data.morePermissive   ?? 9,
-    policyChanges:    data.policyChanges    ?? 83,
+    payersTracked:     data.payersTracked     ?? 0,
+    policiesIndexed:   data.policiesIndexed   ?? 0,
+    changedThisQtr:    data.changedThisQtr    ?? 0,
+    paRequired:        data.paRequired        ?? 0,
+    payersCovering:    data.payersCovering    ?? 0,
+    openAccess:        data.openAccess        ?? 0,
+    biosimilarExposed: data.biosimilarExposed ?? 0,
+    drugsBenchmarked:  data.drugsBenchmarked  ?? 0,
+    moreRestrictive:   data.moreRestrictive   ?? 0,
+    morePermissive:    data.morePermissive    ?? 0,
+    policyChanges:     data.policyChanges     ?? 0,
   };
 
   return (

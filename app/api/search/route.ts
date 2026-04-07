@@ -1,4 +1,4 @@
-// ── Policy search endpoint — queries Supabase directly ──────────────
+// ── Policy search endpoint — queries both policy tables ──────────────
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
@@ -30,35 +30,63 @@ export async function GET(request: NextRequest) {
 
     const supabase = await createClient();
 
-    let query = supabase
+    // Query policy_documents
+    let pdQuery = supabase
       .from("policy_documents")
       .select("*")
       .or(`drug_name.ilike.%${q}%,drug_generic.ilike.%${q}%,prior_auth_criteria.ilike.%${q}%,payer_id.ilike.%${q}%`)
       .limit(20);
 
-    if (payer_id)   query = query.eq("payer_id", payer_id);
-    if (drug_name)  query = query.ilike("drug_name", `%${drug_name}%`);
+    if (payer_id)  pdQuery = pdQuery.eq("payer_id", payer_id);
+    if (drug_name) pdQuery = pdQuery.ilike("drug_name", `%${drug_name}%`);
 
-    const { data: rows, error } = await query;
+    // Query medical_benefit_policies
+    let mbpQuery = supabase
+      .from("medical_benefit_policies")
+      .select("*")
+      .or(`drug_name.ilike.%${q}%,drug_generic.ilike.%${q}%,payer_id.ilike.%${q}%,payer_name.ilike.%${q}%`)
+      .limit(20);
 
-    if (error) {
-      console.error("Search query failed:", error.message);
-      return NextResponse.json([], { status: 200 });
-    }
+    if (payer_id)  mbpQuery = mbpQuery.eq("payer_id", payer_id);
+    if (drug_name) mbpQuery = mbpQuery.ilike("drug_name", `%${drug_name}%`);
 
-    // Map to SearchResult shape for backwards compatibility
-    const results: SearchResult[] = (rows ?? []).map(policy => ({
-      policy_id: policy.id,
+    const [pdResult, mbpResult] = await Promise.all([pdQuery, mbpQuery]);
+
+    const pdRows  = pdResult.error  ? [] : (pdResult.data  ?? []);
+    const mbpRows = mbpResult.error ? [] : (mbpResult.data ?? []);
+
+    // Map policy_documents rows
+    const pdResults: SearchResult[] = pdRows.map((policy: Record<string, unknown>) => ({
+      policy_id: policy.id as string,
       chunk_text: `${policy.drug_name} (${policy.drug_generic}) - ${policy.payer_id}\n\nCoverage: ${policy.coverage_status}\nPrior Auth: ${policy.prior_auth_required ? 'Required' : 'Not Required'}\nStep Therapy: ${policy.step_therapy ? 'Required' : 'Not Required'}\nQuantity Limit: ${policy.quantity_limit || 'None'}\n\nCriteria: ${policy.prior_auth_criteria || 'No specific criteria listed'}`,
       similarity: 0.9,
       metadata: {
-        payer_id: policy.payer_id,
-        drug_name: policy.drug_name,
-        section: 'policy_overview'
-      }
+        payer_id: policy.payer_id as string,
+        drug_name: policy.drug_name as string,
+        section: 'policy_overview',
+      },
     }));
 
-    return NextResponse.json(results, { status: 200 });
+    // Map medical_benefit_policies rows
+    const mbpResults: SearchResult[] = mbpRows.map((row: Record<string, unknown>) => {
+      const pa = row.prior_auth as Record<string, unknown> | null;
+      return {
+        policy_id: row.id as string,
+        chunk_text: `${row.drug_name} (${row.drug_generic}) - ${row.payer_name}\n\nCoverage: ${row.coverage_status}\nPrior Auth: ${row.prior_auth_required ? 'Required' : 'Not Required'}\nStep Therapy: ${row.step_therapy_required ? 'Required' : 'Not Required'}\n\nCriteria: ${(pa?.criteria_text as string) || 'No specific criteria listed'}`,
+        similarity: 0.85,
+        metadata: {
+          payer_id: row.payer_id as string,
+          drug_name: row.drug_name as string,
+          section: 'medical_benefit',
+        },
+      };
+    });
+
+    // Deduplicate by payer_id + drug_generic
+    const seen = new Set(pdResults.map(r => `${r.metadata.payer_id}:${r.metadata.drug_name}`));
+    const uniqueMbp = mbpResults.filter(r => !seen.has(`${r.metadata.payer_id}:${r.metadata.drug_name}`));
+
+    return NextResponse.json([...pdResults, ...uniqueMbp], { status: 200 });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Search failed";
     return NextResponse.json({ error: message }, { status: 500 });
