@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Lato } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -27,6 +28,7 @@ export default function RootLayout({
     >
       <body className="bg-[#F7F8FC] text-[#0D1C3A] antialiased" style={{ fontFamily: "var(--font-lato), Lato, sans-serif" }}>
         <Providers>{children}</Providers>
+        <Analytics />
       </body>
     </html>
   );
