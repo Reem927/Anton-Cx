@@ -12,134 +12,7 @@ const EXAMPLE_QUESTIONS = [
   "How does UPMC handle bevacizumab site of care?",
 ];
 
-const MOCK_RESPONSES = [
-  {
-    keywords: ["keytruda", "pembrolizumab"],
-    result: {
-      answer: `Yes — Keytruda (pembrolizumab) is covered under the medical benefit by most major commercial payers for non-small cell lung cancer. Cigna and UHC both require prior authorization with PD-L1 expression ≥1% confirmed by pathology report, ECOG performance status 0–2, and no prior checkpoint inhibitor therapy. BCBS NC does not cover Keytruda under the medical benefit — analysts recommend Opdivo as the preferred alternative. UPMC handles this as a pharmacy benefit only. Priority Health covers it as Preferred Specialty with PA required.`,
-      source: "Cigna Drug Policy — Pembrolizumab (Jan 2025), p.3",
-      sourceUrl: "#",
-      coverageStates: [
-        { payer: "UHC",             status: "covered",       tier: "Preferred Specialty", badge: "PA Required" },
-        { payer: "Cigna",           status: "covered",       tier: "Non-Preferred",       badge: "PA Required" },
-        { payer: "BCBS NC",         status: "not_covered",   tier: null,                  badge: "See alternatives" },
-        { payer: "UPMC",            status: "pharmacy_only", tier: null,                  badge: "Pharmacy version exists" },
-        { payer: "Priority Health", status: "covered",       tier: "Preferred Specialty", badge: "PA Required" },
-      ],
-      followUps: [
-        "What step therapy does UHC require for Keytruda?",
-        "Compare Keytruda coverage across all payers",
-        "What changed in Keytruda policies last quarter?",
-      ],
-      policies: [
-        { payer: "Cigna",            drug: "Pembrolizumab (Keytruda)", drug_generic: "pembrolizumab", date: "Jan 2025", type: "Medical Benefit", pages: 12, id: null },
-        { payer: "UnitedHealthcare", drug: "Pembrolizumab (Keytruda)", drug_generic: "pembrolizumab", date: "Dec 2024", type: "Medical Benefit", pages: 9,  id: null },
-        { payer: "Priority Health",  drug: "Oncology Drug List",       drug_generic: "pembrolizumab", date: "2026",     type: "Medical Benefit", pages: 47, id: null },
-      ],
-    },
-  },
-  {
-    keywords: ["humira", "adalimumab", "step therapy", "step"],
-    result: {
-      answer: `UnitedHealthcare requires step therapy before approving Humira (adalimumab) under the medical benefit. Patients must first try and fail at least one biosimilar — specifically Hadlima (adalimumab-bwwd) or Hyrimoz (adalimumab-aqvh) — for a minimum of 90 days unless there is a documented contraindication. Failure must be confirmed via prescriber attestation and pharmacy claims history. If step therapy is bypassed due to contraindication, a clinical exception form is required at PA submission.`,
-      source: "UHC Medical Drug Policy — Adalimumab (Feb 2025), p.7",
-      sourceUrl: "#",
-      coverageStates: [
-        { payer: "UHC",             status: "covered",       tier: "Non-Preferred",      badge: "Step Therapy" },
-        { payer: "Cigna",           status: "covered",       tier: "Non-Preferred",      badge: "Step Therapy" },
-        { payer: "BCBS NC",         status: "covered",       tier: "Preferred Specialty", badge: "PA Required" },
-        { payer: "UPMC",            status: "covered",       tier: "Non-Preferred",      badge: "Step Therapy" },
-        { payer: "Priority Health", status: "covered",       tier: "Non-Preferred",      badge: "Step Therapy" },
-      ],
-      followUps: [
-        "Which biosimilars does UHC accept for Humira step therapy?",
-        "Does Cigna have the same step therapy for Humira?",
-        "What changed in Humira policies since biosimilar launch?",
-      ],
-      policies: [
-        { payer: "UnitedHealthcare", drug: "Adalimumab (Humira) & Biosimilars", drug_generic: "adalimumab", date: "Feb 2025", type: "Medical Benefit", pages: 18, id: null },
-        { payer: "Cigna",            drug: "Adalimumab Products",                drug_generic: "adalimumab", date: "Jan 2025", type: "Medical Benefit", pages: 14, id: null },
-      ],
-    },
-  },
-  {
-    keywords: ["rituximab", "rituxan", "biosimilar"],
-    result: {
-      answer: `Most major commercial payers require a biosimilar trial before approving the reference biologic Rituximab (Rituxan) for non-oncology indications. UHC, Cigna, and Priority Health all mandate that patients try Ruxience (rituximab-pvvr) or Truxima (rituximab-abbs) first for at least one treatment course. For oncology indications (NHL, CLL), biosimilar step therapy is waived by UHC and Cigna — Rituximab is covered directly with PA. BCBS NC applies biosimilar step therapy across all indications without exception.`,
-      source: "Cigna Drug Policy — Rituximab Products (Nov 2024), p.5",
-      sourceUrl: "#",
-      coverageStates: [
-        { payer: "UHC",             status: "covered",     tier: "Non-Preferred",      badge: "Biosimilar first" },
-        { payer: "Cigna",           status: "covered",     tier: "Non-Preferred",      badge: "Biosimilar first" },
-        { payer: "BCBS NC",         status: "covered",     tier: "Non-Preferred",      badge: "Biosimilar first" },
-        { payer: "UPMC",            status: "covered",     tier: "Preferred Specialty", badge: "PA Required" },
-        { payer: "Priority Health", status: "covered",     tier: "Non-Preferred",      badge: "Biosimilar first" },
-      ],
-      followUps: [
-        "Which rituximab biosimilars are accepted at UHC?",
-        "Is biosimilar step therapy waived for oncology at BCBS NC?",
-        "Compare rituximab vs biosimilar coverage across payers",
-      ],
-      policies: [
-        { payer: "Cigna",            drug: "Rituximab & Biosimilars", drug_generic: "rituximab", date: "Nov 2024", type: "Medical Benefit", pages: 16, id: null },
-        { payer: "UnitedHealthcare", drug: "Rituximab Products",      drug_generic: "rituximab", date: "Oct 2024", type: "Medical Benefit", pages: 11, id: null },
-        { payer: "BCBS NC",          drug: "Preferred Injectable Oncology Program", drug_generic: "rituximab", date: "Jan 2025", type: "Medical Benefit", pages: 34, id: null },
-      ],
-    },
-  },
-  {
-    keywords: ["opdivo", "nivolumab", "bcbs", "pa criteria", "prior auth"],
-    result: {
-      answer: `BCBS NC requires prior authorization for Opdivo (nivolumab) under their Preferred Injectable Oncology Program. Key PA criteria include: confirmed pathology report with cancer type and stage, PD-L1 testing results (MSI-H or TMB-H status for tumor-agnostic approvals), ECOG performance status 0–2, and documentation that first-line platinum-based chemotherapy was completed or contraindicated. Prescriber must be a board-certified oncologist. Renewal authorization requires documented stable disease or partial response at 12 weeks per RECIST criteria.`,
-      source: "BCBS NC Preferred Injectable Oncology Program (Mar 2025), p.12",
-      sourceUrl: "#",
-      coverageStates: [
-        { payer: "UHC",             status: "covered",     tier: "Preferred Specialty", badge: "PA Required" },
-        { payer: "Cigna",           status: "covered",     tier: "Preferred Specialty", badge: "PA Required" },
-        { payer: "BCBS NC",         status: "covered",     tier: "Preferred Specialty", badge: "PA Required" },
-        { payer: "UPMC",            status: "covered",     tier: "Preferred Specialty", badge: "PA Required" },
-        { payer: "Priority Health", status: "covered",     tier: "Non-Preferred",      badge: "PA Required" },
-      ],
-      followUps: [
-        "How does BCBS NC's Opdivo PA compare to Keytruda?",
-        "What biomarker tests does BCBS NC require for Opdivo?",
-        "Does Priority Health cover Opdivo as preferred?",
-      ],
-      policies: [
-        { payer: "BCBS NC",          drug: "Preferred Injectable Oncology Program", drug_generic: "nivolumab", date: "Mar 2025", type: "Medical Benefit", pages: 34, id: null },
-        { payer: "UnitedHealthcare", drug: "Nivolumab (Opdivo)",                    drug_generic: "nivolumab", date: "Jan 2025", type: "Medical Benefit", pages: 10, id: null },
-        { payer: "Cigna",            drug: "Nivolumab Coverage Policy",             drug_generic: "nivolumab", date: "Dec 2024", type: "Medical Benefit", pages: 9,  id: null },
-      ],
-    },
-  },
-  {
-    keywords: ["bevacizumab", "avastin", "upmc", "site of care", "site"],
-    result: {
-      answer: `UPMC Health Plan restricts bevacizumab (Avastin) administration to ambulatory infusion centers and physician offices only — hospital outpatient department infusions are not reimbursed under their site of care program effective January 2025. Patients currently receiving infusions at hospital outpatient departments must transition to an approved site within 90 days. Exceptions are granted for patients with documented medical necessity requiring hospital-level monitoring, subject to clinical review. UHC and Cigna allow all four site types but include SOS language encouraging ambulatory settings.`,
-      source: "UPMC Commercial Medical Drug Policy — Bevacizumab (Jan 2025), p.4",
-      sourceUrl: "#",
-      coverageStates: [
-        { payer: "UHC",             status: "covered",       tier: "Preferred Specialty", badge: "SOS Preferred" },
-        { payer: "Cigna",           status: "covered",       tier: "Preferred Specialty", badge: "SOS Preferred" },
-        { payer: "BCBS NC",         status: "covered",       tier: "Preferred Specialty", badge: "PA Required" },
-        { payer: "UPMC",            status: "covered",       tier: "Preferred Specialty", badge: "Site restricted" },
-        { payer: "Priority Health", status: "no_policy",     tier: null,                  badge: "No policy found" },
-      ],
-      followUps: [
-        "Which payers have site of care restrictions for oncology drugs?",
-        "What sites does UPMC allow for Keytruda infusions?",
-        "Did UPMC change their bevacizumab SOS policy recently?",
-      ],
-      policies: [
-        { payer: "UPMC",            drug: "Bevacizumab (Avastin) — SOS Policy",  drug_generic: "bevacizumab", date: "Jan 2025", type: "Medical Benefit", pages: 8,  id: null },
-        { payer: "UnitedHealthcare", drug: "Bevacizumab Products",               drug_generic: "bevacizumab", date: "Nov 2024", type: "Medical Benefit", pages: 12, id: null },
-        { payer: "Cigna",            drug: "Bevacizumab Coverage Policy",         drug_generic: "bevacizumab", date: "Oct 2024", type: "Medical Benefit", pages: 10, id: null },
-      ],
-    },
-  },
-];
-
-const FALLBACK_RESULT = {
+const FALLBACK_RESULT: SearchResult = {
   answer: `No specific policy was found matching your query in the current policy library. This may mean no payer has published a medical benefit policy for this drug or indication, the policy uses different terminology, or the relevant documents haven't been ingested yet. Try rephrasing with the drug's brand or generic name, or check the Policy Library for recently ingested documents.`,
   source: "Anton-Cx Policy Library — Search Index",
   sourceUrl: "#",
@@ -158,10 +31,102 @@ const FALLBACK_RESULT = {
   policies: [],
 };
 
-function getMockResult(query: string) {
-  const q = query.toLowerCase();
-  const match = MOCK_RESPONSES.find(r => r.keywords.some(kw => q.includes(kw)));
-  return match ? match.result : FALLBACK_RESULT;
+const TIER_LABELS: Record<string, string> = {
+  preferred_specialty: "Preferred Specialty",
+  non_specialty: "Non-Specialty",
+  non_preferred: "Non-Preferred",
+  not_covered: "Not Covered",
+};
+
+/** Build a SearchResult from real /api/search policy rows */
+function buildResultFromPolicies(
+  query: string,
+  rows: Array<{
+    id: string; payer_id: string; drug_name: string; drug_generic: string;
+    coverage_status: string; formulary_tier: string | null;
+    prior_auth_required: boolean; step_therapy: boolean;
+    prior_auth_criteria: string | null; quantity_limit: string | null;
+    indications: string[]; step_therapy_drugs: string[];
+    effective_date: string; policy_version: string;
+  }>,
+): SearchResult {
+  if (rows.length === 0) return FALLBACK_RESULT;
+
+  // Group by payer for coverage cards
+  const byPayer = new Map<string, typeof rows[0]>();
+  for (const r of rows) {
+    if (!byPayer.has(r.payer_id)) byPayer.set(r.payer_id, r);
+  }
+
+  const coverageStates: CoverageState[] = Array.from(byPayer.values()).map(p => ({
+    payer:  p.payer_id.toUpperCase().replace(/-/g, " "),
+    status: p.coverage_status === "covered" ? "covered"
+          : p.coverage_status === "not_covered" ? "not_covered"
+          : p.coverage_status === "pharmacy_only" ? "pharmacy_only"
+          : "no_policy",
+    tier:   p.formulary_tier ? (TIER_LABELS[p.formulary_tier] ?? p.formulary_tier) : null,
+    badge:  p.prior_auth_required ? "PA Required"
+          : p.step_therapy ? "Step Therapy"
+          : p.coverage_status === "covered" ? "Open Access"
+          : null,
+  }));
+
+  const drug = rows[0];
+  const paCount = rows.filter(r => r.prior_auth_required).length;
+  const stCount = rows.filter(r => r.step_therapy).length;
+
+  const answer = `Found ${rows.length} payer ${rows.length === 1 ? "policy" : "policies"} for ${drug.drug_name} (${drug.drug_generic}). ` +
+    `${paCount} ${paCount === 1 ? "requires" : "require"} prior authorization` +
+    (stCount > 0 ? `, ${stCount} ${stCount === 1 ? "requires" : "require"} step therapy` : "") +
+    `. Covered indications include ${drug.indications.join(", ") || "N/A"}.` +
+    (drug.prior_auth_criteria ? ` Key PA criteria: ${drug.prior_auth_criteria}` : "");
+
+  const policies: PolicyData[] = rows.map(r => ({
+    payer:        r.payer_id.toUpperCase().replace(/-/g, " "),
+    drug:         `${r.drug_name} (${r.drug_generic})`,
+    drug_generic: r.drug_generic,
+    date:         new Date(r.effective_date).toLocaleDateString("en-US", { month: "short", year: "numeric" }),
+    type:         "Medical Benefit",
+    pages:        0,
+    id:           r.id,
+  }));
+
+  return {
+    answer,
+    source: `Anton-Cx Policy Database — ${rows.length} policies matched`,
+    sourceUrl: "#",
+    coverageStates,
+    followUps: [
+      `Compare ${drug.drug_name} coverage across all payers`,
+      `What changed in ${drug.drug_name} policies last quarter?`,
+      `What are the step therapy requirements for ${drug.drug_name}?`,
+    ],
+    policies,
+  };
+}
+
+async function fetchSearchResult(query: string): Promise<SearchResult> {
+  try {
+    const params = new URLSearchParams({ q: query });
+    const res = await fetch(`/api/search?${params}`);
+    if (!res.ok) return FALLBACK_RESULT;
+    const rows = await res.json();
+    if (!Array.isArray(rows) || rows.length === 0) return FALLBACK_RESULT;
+    // API returns SearchResult[] with chunk_text — extract underlying policy data
+    // or raw policy rows depending on the response shape
+    if (rows[0]?.metadata) {
+      // Shape from /api/search: { policy_id, chunk_text, similarity, metadata }
+      // Fetch full policies for matched drugs
+      const drugNames = [...new Set(rows.map((r: { metadata: { drug_name: string } }) => r.metadata.drug_name))];
+      const policyRes = await fetch(`/api/policies?drug_name=${encodeURIComponent(drugNames[0])}`);
+      if (!policyRes.ok) return FALLBACK_RESULT;
+      const policies = await policyRes.json();
+      return buildResultFromPolicies(query, Array.isArray(policies) ? policies : []);
+    }
+    return buildResultFromPolicies(query, rows);
+  } catch {
+    return FALLBACK_RESULT;
+  }
 }
 
 interface CoverageState { payer: string; status: string; tier: string | null; badge: string | null; }
@@ -198,7 +163,7 @@ function CoverageCard({ payer, status, tier, badge }: CoverageState) {
 
 function TypingText({ text, onDone }: { text: string; onDone?: () => void }) {
   const [displayed, setDisplayed] = useState("");
-  const ref = useRef({ idx: 0, iv: 0 as ReturnType<typeof setInterval> });
+  const ref = useRef<{ idx: number; iv: ReturnType<typeof setInterval> | undefined }>({ idx: 0, iv: undefined });
   useEffect(() => {
     ref.current.idx = 0;
     clearInterval(ref.current.iv);
@@ -388,25 +353,24 @@ export default function PolicySearch() {
   const runSearch = useCallback((q: string) => {
     if (!q.trim() || loading) return;
 
+    const doSearch = async () => {
+      setLoading(true);
+      const result = await fetchSearchResult(q);
+      setMessages(prev => [...prev, { id: crypto.randomUUID(), query: q, result }]);
+      setLoading(false);
+    };
+
     if (phase === "hero") {
       setTopBarQuery(q);
       setPhase("transitioning");
       setTimeout(() => {
         setPhase("chat");
-        setLoading(true);
-        setTimeout(() => {
-          setMessages([{ id: crypto.randomUUID(), query: q, result: getMockResult(q) }]);
-          setLoading(false);
-        }, 1200);
+        doSearch();
       }, 320);
       return;
     }
 
-    setLoading(true);
-    setTimeout(() => {
-      setMessages(prev => [...prev, { id: crypto.randomUUID(), query: q, result: getMockResult(q) }]);
-      setLoading(false);
-    }, 1200);
+    doSearch();
   }, [loading, phase]);
 
   useEffect(() => {

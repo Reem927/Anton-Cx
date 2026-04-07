@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { StatusPill } from "@/components/ui/StatusPill";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@/components/ui/Skeleton";
 import type { PolicyDocument } from "@/lib/types";
 
 interface CoverageTableProps {

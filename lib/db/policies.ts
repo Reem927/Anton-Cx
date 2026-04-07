@@ -1,9 +1,11 @@
 // ── Supabase CRUD for policy tables ────────────────────────────────
+// All functions accept a Supabase client as the first argument so callers
+// can pass the session-aware server client (RLS enforced).
 
-import { supabase } from '../supabase';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { MedicalBenefitPolicy, PharmacyBenefitPolicy } from '../types/policy';
 
-export async function saveMedicalPolicy(policy: MedicalBenefitPolicy) {
+export async function saveMedicalPolicy(supabase: SupabaseClient, policy: MedicalBenefitPolicy) {
   const { data, error } = await supabase
     .from('medical_benefit_policies')
     .upsert(
@@ -53,7 +55,7 @@ export async function saveMedicalPolicy(policy: MedicalBenefitPolicy) {
   return data;
 }
 
-export async function savePharmacyPolicy(policy: PharmacyBenefitPolicy) {
+export async function savePharmacyPolicy(supabase: SupabaseClient, policy: PharmacyBenefitPolicy) {
   const { data, error } = await supabase
     .from('pharmacy_benefit_policies')
     .upsert(
@@ -88,7 +90,7 @@ export async function savePharmacyPolicy(policy: PharmacyBenefitPolicy) {
   return data;
 }
 
-export async function getMedicalPolicy(payerId: string, drugGeneric: string) {
+export async function getMedicalPolicy(supabase: SupabaseClient, payerId: string, drugGeneric: string) {
   const { data, error } = await supabase
     .from('medical_benefit_policies')
     .select('*')
@@ -104,7 +106,7 @@ export async function getMedicalPolicy(payerId: string, drugGeneric: string) {
 
 // ── Library queries ───────────────────────────────────────────────
 
-export async function getAllLibraryPolicies() {
+export async function getAllLibraryPolicies(supabase: SupabaseClient) {
   const { data, error } = await supabase
     .from('medical_benefit_policies')
     .select('*')
@@ -115,7 +117,7 @@ export async function getAllLibraryPolicies() {
   return (data ?? []) as MedicalBenefitPolicy[];
 }
 
-export async function getPoliciesByDrug(drugGeneric: string) {
+export async function getPoliciesByDrug(supabase: SupabaseClient, drugGeneric: string) {
   const { data, error } = await supabase
     .from('medical_benefit_policies')
     .select('*')
@@ -126,7 +128,7 @@ export async function getPoliciesByDrug(drugGeneric: string) {
   return (data ?? []) as MedicalBenefitPolicy[];
 }
 
-export async function getPharmacyPolicy(payerId: string, drugGeneric: string) {
+export async function getPharmacyPolicy(supabase: SupabaseClient, payerId: string, drugGeneric: string) {
   const { data, error } = await supabase
     .from('pharmacy_benefit_policies')
     .select('*')

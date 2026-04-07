@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase-server";
 
 function parseCompositeId(raw: string) {
   if (raw.startsWith("medical:")) {
@@ -23,6 +23,7 @@ export async function GET(
   try {
     const { id } = await params;
     const parsed = parseCompositeId(id);
+    const supabase = await createClient();
 
     if (parsed.kind === "unknown") {
       return NextResponse.json({ error: "Invalid policy id." }, { status: 400 });

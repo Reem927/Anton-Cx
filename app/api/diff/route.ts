@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase-server';
 import { diffPolicies } from '@/lib/diff';
 import type { PolicyDocument, DiffResult } from '@/lib/types';
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
     const body = await request.json() as {
       policy_id_a: string;
       policy_id_b: string;
