@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase-server";
 import type { MedicalBenefitPolicy, PharmacyBenefitPolicy } from "@/lib/types/policy";
 
 type CoverageState = "Covered" | "Not Covered" | "No Policy Found" | "Pharmacy Only";
@@ -185,6 +185,8 @@ export async function POST(request: NextRequest) {
     if (!drugName) {
       return NextResponse.json({ error: "drugName is required" }, { status: 400 });
     }
+
+    const supabase = await createClient();
 
     const medicalQuery = supabase
       .from("medical_benefit_policies")

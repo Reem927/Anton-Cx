@@ -5,11 +5,27 @@ import { CoverageTable } from "@/components/dashboard/CoverageTable";
 import { AlertFeed } from "@/components/dashboard/AlertFeed";
 import { getPersonaConfig } from "@/lib/persona";
 import { usePersona } from "@/lib/persona-context";
-import { SEED_POLICIES } from "@/lib/seed-data";
+import { useCachedFetch } from "@/lib/hooks/use-cached-fetch";
+import type { PolicyDocument } from "@/lib/types";
 
 export default function DashboardPage() {
   const { persona } = usePersona();
   const config = getPersonaConfig(persona);
+
+  const { data: policies, loading } = useCachedFetch<PolicyDocument[]>(
+    "dashboard:policies",
+    "/api/policies",
+  );
+
+  // Compute real metrics from policy data
+  const metrics = policies
+    ? {
+        payersTracked:   new Set(policies.map(p => p.payer_id)).size,
+        policiesIndexed: policies.length,
+        changedThisQtr:  policies.filter(p => p.changed_fields.length > 0).length,
+        paRequired:      policies.filter(p => p.prior_auth_required).length,
+      }
+    : {};
 
   return (
     <div className="p-6">
@@ -39,7 +55,7 @@ export default function DashboardPage() {
 
       {/* Metric cards */}
       <div className="mb-6">
-        <MetricCards persona={persona} data={{}} />
+        <MetricCards persona={persona} data={metrics} />
       </div>
 
       {/* Coverage table + alert feed */}
@@ -57,7 +73,7 @@ export default function DashboardPage() {
           >
             COVERAGE OVERVIEW
           </h2>
-          <CoverageTable policies={SEED_POLICIES} />
+          <CoverageTable policies={policies ?? []} loading={loading} />
         </div>
 
         <div>

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase-server";
 
 const MAJOR_PAYER_IDS = [
   "uhc",
@@ -558,6 +558,7 @@ export async function GET(request: NextRequest) {
     ])];
 
     // Query the policy_documents table
+    const supabase = await createClient();
     const { data: policyRows, error: policyError } = await supabase
       .from("policy_documents")
       .select("*")

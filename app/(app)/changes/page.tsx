@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { FieldDiff, ChangeTrackingResult } from "@/lib/types";
+import type { FieldDiff, ChangeTrackingResult, PolicyDocument } from "@/lib/types";
 import { getChangeSeverityColor } from "@/lib/changeTracker";
+import { cacheGet, cacheSet } from "@/lib/cache";
 
 type OverallSeverity = "major" | "moderate" | "cosmetic";
 
@@ -25,97 +26,86 @@ interface PolicyChange {
   change_tracking: ChangeTrackingResult;
 }
 
-const MOCK_CHANGES: PolicyChange[] = [
-  {
-    id: "chg-001", drug_name: "Keytruda", drug_generic: "pembrolizumab",
-    j_code: "J9271", payer_id: "aetna", payer_name: "Aetna",
-    drug_category: "Oncology", plan_type: "commercial",
-    detected_at: "2026-04-02T09:14:00Z", effective_date: "2026-04-01",
-    policy_version: "v3.2", prev_version: "v3.1",
-    source_pdf_url: "/storage/aetna-keytruda-v3.2.pdf",
-    prev_pdf_url:   "/storage/aetna-keytruda-v3.1.pdf",
-    change_tracking: {
-      change_severity_overall: "major",
-      change_summary: "Aetna added a PA requirement for Keytruda and introduced a new PD-L1 biomarker testing mandate across all solid tumor indications.",
-      total_changes: 3, major_changes: 3, moderate_changes: 0, cosmetic_changes: 0,
-      changed_fields: [
-        { field_name: "Coverage Status",    field_path: "coverage_status",                     old_value: "Covered",  new_value: "PA Required",                                        severity: "major",    clinical_impact: true,  impact_explanation: "Patients now need PA before access is granted.",           change_type: "modified" },
-        { field_name: "Prior Auth Required", field_path: "prior_auth_required",                old_value: "No",       new_value: "Yes",                                                severity: "major",    clinical_impact: true,  impact_explanation: "New PA requirement delays treatment initiation.",           change_type: "modified" },
-        { field_name: "Biomarker Testing",  field_path: "prior_auth_criteria.biomarker_testing", old_value: "—",     new_value: "PD-L1 TPS ≥1% confirmed by FDA-approved test required", severity: "major",   clinical_impact: true,  impact_explanation: "New testing prerequisite could delay or block approval.", change_type: "added"    },
-      ],
-    },
-  },
-  {
-    id: "chg-002", drug_name: "Humira", drug_generic: "adalimumab",
-    j_code: "J0135", payer_id: "uhc", payer_name: "UnitedHealthcare",
-    drug_category: "Immunology", plan_type: "commercial",
-    detected_at: "2026-03-28T14:30:00Z", effective_date: "2026-04-01",
-    policy_version: "v4.3", prev_version: "v4.2",
-    source_pdf_url: "/storage/uhc-humira-v4.3.pdf",
-    prev_pdf_url:   "/storage/uhc-humira-v4.2.pdf",
-    change_tracking: {
-      change_severity_overall: "major",
-      change_summary: "UHC added a mandatory TNF inhibitor step before Humira, requiring patients to fail two drugs instead of one.",
-      total_changes: 2, major_changes: 1, moderate_changes: 1, cosmetic_changes: 0,
-      changed_fields: [
-        { field_name: "Step Therapy Drugs", field_path: "step_therapy_steps",              old_value: "Methotrexate only",    new_value: "Methotrexate + TNF inhibitor", severity: "major",    clinical_impact: true,  impact_explanation: "Two-step requirement significantly delays access.", change_type: "modified" },
-        { field_name: "PA Criteria Text",   field_path: "prior_auth_criteria.raw_criteria_text", old_value: "Must fail methotrexate ≥3 months.", new_value: "Must fail methotrexate AND one TNF inhibitor.", severity: "moderate", clinical_impact: true, impact_explanation: "Updated language reflects the new two-step requirement.", change_type: "modified" },
-      ],
-    },
-  },
-  {
-    id: "chg-003", drug_name: "Dupixent", drug_generic: "dupilumab",
-    j_code: "J0173", payer_id: "cigna", payer_name: "Cigna",
-    drug_category: "Dermatology", plan_type: "commercial",
-    detected_at: "2026-03-20T11:00:00Z", effective_date: "2026-03-15",
-    policy_version: "v3.2", prev_version: "v3.1",
-    source_pdf_url: "/storage/cigna-dupixent-v3.2.pdf",
-    prev_pdf_url:   "/storage/cigna-dupixent-v3.1.pdf",
-    change_tracking: {
-      change_severity_overall: "moderate",
-      change_summary: "Cigna expanded Dupixent coverage to include Eosinophilic Esophagitis (EoE) as a newly approved indication.",
-      total_changes: 1, major_changes: 0, moderate_changes: 1, cosmetic_changes: 0,
-      changed_fields: [
-        { field_name: "Covered Indications", field_path: "indications", old_value: "AD, Asthma, CRSwNP", new_value: "AD, Asthma, CRSwNP, EoE", severity: "moderate", clinical_impact: true, impact_explanation: "EoE patients can now access Dupixent under Cigna.", change_type: "modified" },
-      ],
-    },
-  },
-  {
-    id: "chg-004", drug_name: "Stelara", drug_generic: "ustekinumab",
-    j_code: "J3357", payer_id: "bcbs-tx", payer_name: "BCBS Texas",
-    drug_category: "Immunology", plan_type: "commercial",
-    detected_at: "2026-03-14T08:45:00Z", effective_date: "2026-03-01",
-    policy_version: "v4.2", prev_version: "v4.1",
-    source_pdf_url: "/storage/bcbs-tx-stelara-v4.2.pdf",
-    prev_pdf_url:   "/storage/bcbs-tx-stelara-v4.1.pdf",
-    change_tracking: {
-      change_severity_overall: "moderate",
-      change_summary: "BCBS Texas tightened Stelara PA criteria to now require documented anti-TNF failure in addition to conventional therapy.",
-      total_changes: 2, major_changes: 0, moderate_changes: 1, cosmetic_changes: 1,
-      changed_fields: [
-        { field_name: "Prior Treatment Failure", field_path: "prior_auth_criteria.prior_treatment_failure", old_value: "Must fail conventional therapy.", new_value: "Must fail conventional therapy AND ≥1 anti-TNF agent.", severity: "moderate", clinical_impact: true, impact_explanation: "Harder PA to obtain for new Stelara patients.", change_type: "modified" },
-        { field_name: "Effective Date",          field_path: "dates.effective_date",                        old_value: "2025-09-01",                   new_value: "2026-03-01",                                       severity: "cosmetic", clinical_impact: false, impact_explanation: "Routine date update.", change_type: "modified" },
-      ],
-    },
-  },
-  {
-    id: "chg-005", drug_name: "Enbrel", drug_generic: "etanercept",
-    j_code: "J1438", payer_id: "humana", payer_name: "Humana",
-    drug_category: "Rheumatology", plan_type: "commercial",
-    detected_at: "2026-03-10T10:20:00Z", effective_date: "2026-03-01",
-    policy_version: "v4.1", prev_version: "v4.0",
-    source_pdf_url: null, prev_pdf_url: null,
-    change_tracking: {
-      change_severity_overall: "cosmetic",
-      change_summary: "Minor administrative update — Humana extended the PA renewal period from 6 to 12 months with no clinical coverage changes.",
-      total_changes: 2, major_changes: 0, moderate_changes: 0, cosmetic_changes: 2,
-      changed_fields: [
-        { field_name: "Renewal Period", field_path: "dates.renewal_period", old_value: "6 months", new_value: "12 months", severity: "cosmetic", clinical_impact: false, impact_explanation: "Fewer PA renewals per year — benefits patients.", change_type: "modified" },
-        { field_name: "Effective Date", field_path: "dates.effective_date", old_value: "2025-09-01", new_value: "2026-03-01", severity: "cosmetic", clinical_impact: false, impact_explanation: "Routine date update.", change_type: "modified" },
-      ],
-    },
-  },
-];
+/** Convert raw policy_documents rows (with changed_fields) into PolicyChange objects */
+function buildChangesFromPolicies(rows: PolicyDocument[]): PolicyChange[] {
+  return rows
+    .filter(r => r.changed_fields && r.changed_fields.length > 0)
+    .map(r => {
+      const fieldDiffs: FieldDiff[] = r.changed_fields.map(fieldName => ({
+        field_name:         fieldName.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
+        field_path:         fieldName,
+        old_value:          "—",
+        new_value:          (r as unknown as Record<string, unknown>)[fieldName] ?? "Updated",
+        severity:           (fieldName === "coverage_status" || fieldName === "prior_auth_required") ? "major" as const
+                          : fieldName === "indications" ? "moderate" as const
+                          : "cosmetic" as const,
+        clinical_impact:    ["coverage_status", "prior_auth_required", "prior_auth_criteria", "step_therapy", "indications"].includes(fieldName),
+        impact_explanation: `${fieldName.replace(/_/g, " ")} was updated.`,
+        change_type:        "modified" as const,
+      }));
+
+      const majorCount    = fieldDiffs.filter(d => d.severity === "major").length;
+      const moderateCount = fieldDiffs.filter(d => d.severity === "moderate").length;
+      const cosmeticCount = fieldDiffs.filter(d => d.severity === "cosmetic").length;
+      const overall: OverallSeverity = majorCount > 0 ? "major" : moderateCount > 0 ? "moderate" : "cosmetic";
+
+      return {
+        id:              r.id,
+        drug_name:       r.drug_name,
+        drug_generic:    r.drug_generic,
+        j_code:          r.j_code,
+        payer_id:        r.payer_id,
+        payer_name:      r.payer_id.toUpperCase().replace(/-/g, " "),
+        drug_category:   "Medical Benefit",
+        plan_type:       "commercial",
+        detected_at:     r.extracted_at,
+        effective_date:  r.effective_date,
+        policy_version:  r.policy_version,
+        prev_version:    "prev",
+        source_pdf_url:  r.source_pdf_url,
+        prev_pdf_url:    null,
+        change_tracking: {
+          change_severity_overall: overall,
+          change_summary:          `${r.changed_fields.length} field${r.changed_fields.length > 1 ? "s" : ""} changed: ${r.changed_fields.join(", ")}.`,
+          total_changes:           fieldDiffs.length,
+          major_changes:           majorCount,
+          moderate_changes:        moderateCount,
+          cosmetic_changes:        cosmeticCount,
+          changed_fields:          fieldDiffs,
+        },
+      };
+    });
+}
+
+function useChanges() {
+  const [changes, setChanges] = useState<PolicyChange[]>(() => {
+    const cached = cacheGet<PolicyChange[]>("changes:list");
+    return cached ?? [];
+  });
+  const [loading, setLoading] = useState(!cacheGet<PolicyChange[]>("changes:list"));
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/changes");
+        if (!res.ok) throw new Error("fetch failed");
+        const rows: PolicyDocument[] = await res.json();
+        if (cancelled) return;
+        const built = buildChangesFromPolicies(rows);
+        setChanges(built);
+        cacheSet("changes:list", built);
+      } catch {
+        // Keep cached/empty state
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  return { changes, loading };
+}
 
 const SPRING = { type: "spring" as const, stiffness: 300, damping: 30 };
 const stagger = (i: number) => Math.min(i * 0.04, 0.2);
@@ -249,14 +239,15 @@ function SplitDiffPanel({ chg }: { chg: PolicyChange }) {
 }
 
 export default function ChangeTrackerPage() {
+  const { changes, loading: changesLoading } = useChanges();
   const [expanded, setExpanded]       = useState<string | null>(null);
   const [filterSev, setFilterSev]     = useState<OverallSeverity | "all">("all");
   const [filterPayer, setFilterPayer] = useState("all");
   const [search, setSearch]           = useState("");
 
-  const payers = ["all", ...Array.from(new Set(MOCK_CHANGES.map(c => c.payer_id)))];
+  const payers = ["all", ...Array.from(new Set(changes.map(c => c.payer_id)))];
 
-  const filtered = useMemo(() => MOCK_CHANGES.filter(c => {
+  const filtered = useMemo(() => changes.filter(c => {
     if (filterSev !== "all" && c.change_tracking.change_severity_overall !== filterSev) return false;
     if (filterPayer !== "all" && c.payer_id !== filterPayer) return false;
     if (search) {
@@ -264,12 +255,12 @@ export default function ChangeTrackerPage() {
       return c.drug_name.toLowerCase().includes(q) || c.payer_name.toLowerCase().includes(q) || c.drug_category.toLowerCase().includes(q);
     }
     return true;
-  }), [filterSev, filterPayer, search]);
+  }), [changes, filterSev, filterPayer, search]);
 
   const counts = {
-    major:    MOCK_CHANGES.filter(c => c.change_tracking.change_severity_overall === "major").length,
-    moderate: MOCK_CHANGES.filter(c => c.change_tracking.change_severity_overall === "moderate").length,
-    cosmetic: MOCK_CHANGES.filter(c => c.change_tracking.change_severity_overall === "cosmetic").length,
+    major:    changes.filter(c => c.change_tracking.change_severity_overall === "major").length,
+    moderate: changes.filter(c => c.change_tracking.change_severity_overall === "moderate").length,
+    cosmetic: changes.filter(c => c.change_tracking.change_severity_overall === "cosmetic").length,
   };
 
   return (
@@ -330,7 +321,12 @@ export default function ChangeTrackerPage() {
       </div>
 
       <div style={{ display: "flex", flexDirection: "column" as const, maxWidth: 860 }}>
-        {filtered.length === 0 && (
+        {changesLoading && filtered.length === 0 && (
+          <div style={{ padding: "48px 0", textAlign: "center" as const, fontFamily: "var(--font-dm-sans),'DM Sans',sans-serif", fontSize: "14px", color: "#A0AABB" }}>
+            Loading changes…
+          </div>
+        )}
+        {!changesLoading && filtered.length === 0 && (
           <div style={{ padding: "48px 0", textAlign: "center" as const, fontFamily: "var(--font-dm-sans),'DM Sans',sans-serif", fontSize: "14px", color: "#A0AABB" }}>
             No changes match your filters.
           </div>

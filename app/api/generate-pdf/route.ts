@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase-server";
 import { generatePolicyPdf } from "@/lib/pdf/generate-policy-pdf";
 import { claude, CLAUDE_MODEL } from "@/lib/ai";
 
@@ -54,6 +54,7 @@ export async function GET(request: NextRequest) {
     const source = searchParams.get("source");
     const drugGeneric = searchParams.get("drug");
 
+    const supabase = await createClient();
     let rows: any[] = [];
 
     if (policyId && source === "medical") {

@@ -13,6 +13,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { extractFromPdf, extractFromText } from '@/lib/extraction';
 import { fetchPolicyFromMcp, scrapeDirectUrl } from '@/lib/mcp/policy-fetch';
 import { saveMedicalPolicy, savePharmacyPolicy } from '@/lib/db/policies';
+import { createClient } from '@/lib/supabase-server';
 import type { IngestionSource } from '@/lib/types/policy';
 
 /**
@@ -209,12 +210,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // ── Save all split policies to Supabase ──
+    // ── Save all split policies to Supabase (server client for RLS) ──
+    const supabase = await createClient();
     if (result?.medical_policies?.length) {
-      await Promise.all(result.medical_policies.map(p => saveMedicalPolicy(p)));
+      await Promise.all(result.medical_policies.map(p => saveMedicalPolicy(supabase, p)));
     }
     if (result?.pharmacy_policies?.length) {
-      await Promise.all(result.pharmacy_policies.map(p => savePharmacyPolicy(p)));
+      await Promise.all(result.pharmacy_policies.map(p => savePharmacyPolicy(supabase, p)));
     }
 
     return NextResponse.json(result, { status: 200 });
