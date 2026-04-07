@@ -60,11 +60,11 @@ function groupByDrug(policies: PolicyDocument[], sort: SortOption): DrugGroup[] 
   const map = new Map<string, DrugGroup>();
 
   for (const p of policies) {
-    const key = p.drug_generic.toLowerCase();
+    // Each drug + payer = its own entry
+    const key = `${p.drug_generic.toLowerCase()}::${p.payer_id.toLowerCase()}`;
     const existing = map.get(key);
     if (existing) {
       existing.policies.push(p);
-      if (!existing.payer_ids.includes(p.payer_id)) existing.payer_ids.push(p.payer_id);
       if (p.effective_date > existing.effective_date) existing.effective_date = p.effective_date;
       if (p.changed_fields.length > 0) existing.hasChanges = true;
     } else {
@@ -219,8 +219,10 @@ export default function PolicyLibraryPage() {
 
   const handleAction = useCallback(async (action: string) => {
     if (!contextMenu) return;
-    // contextMenu.policyId is now drug_generic key
-    const group = groups.find(g => g.drug_generic.toLowerCase() === contextMenu.policyId);
+    // contextMenu.policyId is drug_generic::payer_id key
+    const group = groups.find(g =>
+      `${g.drug_generic.toLowerCase()}::${g.payer_ids[0]?.toLowerCase() ?? ''}` === contextMenu.policyId
+    );
     if (!group) return;
 
     switch (action) {
@@ -228,20 +230,23 @@ export default function PolicyLibraryPage() {
         await triggerDownload(group);
         break;
       case "open":
-        router.push(`/policy-lib/${encodeURIComponent(group.drug_generic.toLowerCase())}`);
+        router.push(`/policy-lib/${encodeURIComponent(group.drug_generic.toLowerCase())}?payer=${encodeURIComponent(group.payer_ids[0] ?? '')}`);
         break;
       case "compare":
         // Future: add to comparison set
         break;
       case "remove":
-        // Remove all policies in this group from local state
-        setPolicies(prev => prev.filter(p => p.drug_generic.toLowerCase() !== group.drug_generic.toLowerCase()));
+        // Remove this specific drug+payer group from local state
+        setPolicies(prev => prev.filter(p =>
+          !(p.drug_generic.toLowerCase() === group.drug_generic.toLowerCase() &&
+            p.payer_id.toLowerCase() === (group.payer_ids[0] ?? '').toLowerCase())
+        ));
         break;
     }
   }, [contextMenu, groups, triggerDownload, router]);
 
   const openPolicy = useCallback((group: DrugGroup) => {
-    router.push(`/policy-lib/${encodeURIComponent(group.drug_generic.toLowerCase())}`);
+    router.push(`/policy-lib/${encodeURIComponent(group.drug_generic.toLowerCase())}?payer=${encodeURIComponent(group.payer_ids[0] ?? '')}`);
   }, [router]);
 
   const COL_TEMPLATE: Record<number, string> = {

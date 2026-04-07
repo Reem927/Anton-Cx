@@ -69,7 +69,7 @@ export function PolicyCard({ group, index, isSelected, onSelect, onContextMenu, 
     PAYER_ABBR[id] ?? id.slice(0, 3).toUpperCase()
   );
   const hasChanged = group.hasChanges;
-  const groupId = group.drug_generic.toLowerCase();
+  const groupId = `${group.drug_generic.toLowerCase()}::${group.payer_ids[0]?.toLowerCase() ?? ''}`;
 
   const borderWidth = isSelected ? "1.5px" : "0.5px";
   const borderColor = isSelected ? "#2E6BE6" : isHovered ? "#C4D4F8" : "#E8EBF2";
