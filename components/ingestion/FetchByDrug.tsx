@@ -79,9 +79,9 @@ export function FetchByDrug({ onStageChange }: FetchByDrugProps) {
       await delay(300);
       updateStage("extracting");
 
-      // Fire requests for each selected payer
-      for (const payer of selectedPayers) {
-        try {
+      // Fire all payer requests in parallel for speed
+      const results = await Promise.allSettled(
+        selectedPayers.map(async (payer) => {
           const res = await fetch("/api/ingest", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -95,19 +95,24 @@ export function FetchByDrug({ onStageChange }: FetchByDrugProps) {
 
           if (!res.ok) {
             const data = await res.json().catch(() => ({}));
-            errors.push(`${payer}: ${data.error ?? res.status}`);
-            continue;
+            throw new Error(`${payer}: ${data.error ?? res.status}`);
           }
 
           const data = await res.json();
           const count = (data.medical_policies?.length ?? (data.medical_policy ? 1 : 0))
                       + (data.pharmacy_policies?.length ?? (data.pharmacy_policy ? 1 : 0));
-          totalAdded += count;
-          setAddedCount(totalAdded);
-        } catch (err) {
-          errors.push(`${payer}: ${err instanceof Error ? err.message : "failed"}`);
+          return { payer, count };
+        })
+      );
+
+      for (const r of results) {
+        if (r.status === "fulfilled") {
+          totalAdded += r.value.count;
+        } else {
+          errors.push(r.reason instanceof Error ? r.reason.message : String(r.reason));
         }
       }
+      setAddedCount(totalAdded);
 
       updateStage("saving");
       await delay(400);

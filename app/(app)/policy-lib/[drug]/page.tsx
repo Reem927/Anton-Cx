@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { StatusPill, TierPill } from "@/components/ui/StatusPill";
 import { PAYER_DISPLAY } from "@/components/library/utils";
@@ -10,7 +10,9 @@ import type { PolicyDocument } from "@/lib/types";
 export default function PolicyDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const drug = decodeURIComponent(params.drug as string);
+  const payerFilter = searchParams.get("payer");
 
   const [policies, setPolicies] = useState<PolicyDocument[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,9 +24,15 @@ export default function PolicyDetailPage() {
         const res = await fetch("/api/policies");
         if (!res.ok) throw new Error("fetch failed");
         const all: PolicyDocument[] = await res.json();
-        const filtered = all.filter(
+        let filtered = all.filter(
           (p) => p.drug_generic.toLowerCase() === drug.toLowerCase()
         );
+        // If opened from a specific drug+payer card, show only that payer
+        if (payerFilter) {
+          filtered = filtered.filter(
+            (p) => p.payer_id.toLowerCase() === payerFilter.toLowerCase()
+          );
+        }
         if (!cancelled) setPolicies(filtered);
       } catch {
         // empty
@@ -34,7 +42,7 @@ export default function PolicyDetailPage() {
     }
     load();
     return () => { cancelled = true; };
-  }, [drug]);
+  }, [drug, payerFilter]);
 
   const drugName = policies[0]?.drug_name ?? drug;
   const drugGeneric = policies[0]?.drug_generic ?? drug;
@@ -146,48 +154,61 @@ function PayerPolicyCard({ policy, index }: { policy: PolicyDocument; index: num
         </div>
       </div>
 
-      {/* Detail sections */}
+      {/* Detail sections — same template as PDF */}
       <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 18 }}>
-        {/* Coverage */}
+        {/* Coverage Details */}
         <DetailSection title="Coverage Details">
           <DetailRow label="Coverage Status" value={<StatusPill status={policy.coverage_status} size="md" />} />
           <DetailRow label="Prior Auth Required" value={policy.prior_auth_required ? "Yes" : "No"} />
           <DetailRow label="Step Therapy" value={policy.step_therapy ? "Yes" : "No"} />
+          <DetailRow label="Formulary Tier" value={policy.formulary_tier?.replace(/_/g, " ") ?? "—"} />
           {policy.site_of_care && <DetailRow label="Site of Care" value={policy.site_of_care} />}
           {policy.quantity_limit && <DetailRow label="Quantity Limit" value={policy.quantity_limit} />}
-          {policy.renewal_period && <DetailRow label="Renewal Period" value={policy.renewal_period} />}
         </DetailSection>
 
-        {/* Prior Auth Criteria */}
-        {policy.prior_auth_criteria && (
-          <DetailSection title="Prior Authorization Criteria">
-            <p style={{
-              fontFamily: "var(--font-dm-sans), Lato, sans-serif",
-              fontSize: "13px", color: "#1B3A6B", lineHeight: 1.7, margin: 0,
-            }}>
-              {policy.prior_auth_criteria}
-            </p>
+        {/* Prior Authorization */}
+        {policy.prior_auth_required && (
+          <DetailSection title="Prior Authorization">
+            {policy.prior_auth_criteria ? (
+              <p style={{
+                fontFamily: "var(--font-dm-sans), Lato, sans-serif",
+                fontSize: "13px", color: "#1B3A6B", lineHeight: 1.7, margin: 0,
+              }}>
+                {policy.prior_auth_criteria}
+              </p>
+            ) : (
+              <DetailRow label="Required" value="Yes — no criteria details available" />
+            )}
+            {policy.renewal_period && <DetailRow label="Renewal Period" value={policy.renewal_period} />}
           </DetailSection>
         )}
 
-        {/* Step Therapy Drugs */}
-        {policy.step_therapy_drugs?.length > 0 && (
-          <DetailSection title="Step Therapy Drugs">
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {policy.step_therapy_drugs.map((d) => (
-                <span key={d} style={{
-                  fontFamily: "var(--font-dm-mono), Lato, sans-serif",
-                  fontSize: "11px", color: "#6B7BA4", background: "#F0F2FA",
-                  borderRadius: 4, padding: "3px 8px",
-                }}>
-                  {d}
-                </span>
+        {/* Step Therapy */}
+        {policy.step_therapy && policy.step_therapy_drugs?.length > 0 && (
+          <DetailSection title="Step Therapy">
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {policy.step_therapy_drugs.map((d, i) => (
+                <div key={d} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{
+                    fontFamily: "var(--font-dm-mono), Lato, sans-serif",
+                    fontSize: "10px", color: "#9AA3BB", width: 44,
+                  }}>
+                    Step {i + 1}
+                  </span>
+                  <span style={{
+                    fontFamily: "var(--font-dm-mono), Lato, sans-serif",
+                    fontSize: "11px", color: "#6B7BA4", background: "#F0F2FA",
+                    borderRadius: 4, padding: "3px 8px",
+                  }}>
+                    {d}
+                  </span>
+                </div>
               ))}
             </div>
           </DetailSection>
         )}
 
-        {/* Indications */}
+        {/* Covered Indications */}
         {policy.indications?.length > 0 && (
           <DetailSection title="Covered Indications">
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
