@@ -13,7 +13,7 @@ Anton Cx solves this by:
 
 1. **Ingesting** any payer's clinical policy PDF via drag-and-drop upload or URL fetch
 2. **Extracting** 9 normalized fields per policy using Claude Vision via the Anthropic API
-3. **Storing** policies in a structured database keyed by `(payer_id, drug_id, effective_date)`
+3. **Storing** policies in a structured Supabase database keyed by `(payer_id, drug_id, effective_date)`
 4. **Serving** three role-specific views — Analyst, Manufacturer, Health Plan — from the same data
 
 Key questions it answers:
@@ -31,10 +31,10 @@ Key questions it answers:
 | Framework | Next.js 14 (App Router) |
 | Language | TypeScript |
 | Styling | Tailwind CSS |
-| ORM | Prisma |
-| Database | SQLite (dev) · Postgres (prod) |
+| Database / Auth | Supabase (hosted Postgres + Supabase Auth) |
 | AI / extraction | Anthropic SDK (Claude Sonnet) |
-| Auth | Clerk or NextAuth (teammate decision) |
+| Embeddings | VoyageAI |
+| Visualizations | D3.js |
 | Animation | Framer Motion · GSAP · @gsap/react · Lenis · react-countup |
 | Deployment | Vercel |
 
@@ -46,8 +46,9 @@ Key questions it answers:
 
 - Node.js 20+
 - npm or pnpm
+- Supabase project (get URL + keys from Supabase dashboard → Project Settings → API)
 - Anthropic API key
-- (Production) Postgres connection string
+- VoyageAI API key (for semantic search / embeddings)
 
 ### Install
 
@@ -62,29 +63,23 @@ npm install
 Create `.env.local` at the project root:
 
 ```env
-# Required
-ANTHROPIC_API_KEY=sk-ant-...
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://<project>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
+SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
 
-# Auth (fill in after choosing provider)
-NEXTAUTH_SECRET=
-NEXTAUTH_URL=http://localhost:3000
-# OR for Clerk:
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
-CLERK_SECRET_KEY=
+# Anthropic
+ANTHROPIC_API_KEY=<your-key>
 
-# Database
-DATABASE_URL="file:./dev.db"
-# Production:
-# DATABASE_URL="postgresql://user:password@host:5432/anton_cx"
+# VoyageAI (embeddings / semantic search)
+VOYAGE_API_KEY=<your-key>
 ```
+
+> **Never commit `.env.local` or any file containing real keys.** All secret files are covered by `.gitignore`.
 
 ### Database setup
 
-```bash
-npx prisma generate
-npx prisma db push
-npm run db:seed       # loads 20 synthetic policy records across 8 payers
-```
+Schema and migrations are managed through the Supabase dashboard or Supabase CLI. The `/supabase` directory is excluded from version control (see `.gitignore`).
 
 ### Run locally
 
@@ -137,95 +132,38 @@ anton-cx/
 │   │   ├── Sidebar.tsx         ← hideable, state in localStorage
 │   │   └── PersonaSwitcher.tsx
 │   ├── dashboard/
-│   │   ├── MetricCards.tsx
-│   │   ├── CoverageTable.tsx
-│   │   └── AlertFeed.tsx
 │   ├── search/
-│   │   ├── SearchHero.tsx
-│   │   └── PolicyResultCard.tsx
-│   └── compare/
-│       ├── CompareToolbar.tsx
-│       ├── DiffSummaryBar.tsx
-│       └── CompareGrid.tsx
+│   ├── compare/
+│   └── ingestion/
 ├── lib/
 │   ├── persona.ts              ← all persona routing logic lives here
 │   ├── extraction.ts           ← Anthropic API call + schema validation
-│   └── diff.ts                 ← field-level diff algorithm
-├── prisma/
-│   ├── schema.prisma
-│   └── seed.ts                 ← 20 synthetic records, 8 payers, 5 drug classes
-├── .claude/
-│   └── skills/                 ← custom Claude Code skills (see SKILLS.md)
+│   ├── diff.ts                 ← field-level diff algorithm
+│   ├── embeddings.ts           ← VoyageAI embedding generation
+│   ├── vector-search.ts        ← semantic search over policy corpus
+│   ├── supabase.ts             ← Supabase browser client
+│   ├── supabase-server.ts      ← Supabase server client (SSR)
+│   └── db/                     ← typed query helpers
+├── .agents/
+│   └── skills/                 ← custom Claude Code skills (see Skills.md)
 ├── CLAUDE.md                   ← agent context (read by Claude Code on every session)
 ├── README.md                   ← this file
-└── SKILLS.md                   ← custom skill specs for Claude Code
-```
-
----
-
-## Claude Code scaffold prompt
-
-Paste this into a Claude Code session to scaffold the entire project from scratch:
-
-```
-Read CLAUDE.md, README.md, and SKILLS.md before writing a single line of code.
-
-Then scaffold the Anton Cx Next.js app in this exact order:
-
-1. Initialize: Next.js 14, TypeScript, Tailwind CSS, App Router, ESLint
-2. Install all dependencies:
-   npm install prisma @prisma/client framer-motion gsap @gsap/react lenis react-countup @anthropic-ai/sdk
-3. Configure Tailwind to include Syne, DM Sans, DM Mono font families
-4. Create Prisma schema — PolicyDocument model with all fields from CLAUDE.md extraction schema
-5. Create three API routes per CLAUDE.md contracts:
-   POST /api/extract · GET /api/policies · POST /api/diff
-6. Create /lib/persona.ts with full ANALYST / MFR / PLAN config objects (columns, filters, actions, bannerText)
-7. Create /lib/extraction.ts with Anthropic SDK call + extraction system prompt from SKILLS.md
-8. Create /lib/diff.ts with field-level diff algorithm from SKILLS.md
-9. Seed database: 20 synthetic policy records — 8 payers, 5 drug classes per CLAUDE.md data strategy
-10. Build shared UI primitives:
-    - /components/ui/StatusPill.tsx (COVERED / PA REQ / DENIED — single source of truth)
-    - /components/ui/Skeleton.tsx (shimmer loading, matches exact layout of target)
-    - /components/ui/AnimatedNumber.tsx (useSpring count-up, stiffness 75 damping 15)
-11. Build app shell (never unmounts between routes):
-    - /components/shell/TopBar.tsx (48px, logo zone, breadcrumb, persona switcher, quarter chip, avatar)
-    - /components/shell/Sidebar.tsx (hideable, 200px↔44px, localStorage key 'anton-cx-sidebar', tooltip on collapse)
-    - /components/shell/PersonaSwitcher.tsx (AnimatePresence cross-fade 230ms — never cut)
-12. Build Dashboard page:
-    - MetricCards with count-up on mount (stagger: 60ms per card)
-    - CoverageTable with status pills across 4 payers
-    - AlertFeed with severity dots
-13. Build Policy Search page with persona-aware columns, filters, and result cards
-14. Build Comparison Engine with field-level diff grid (CONFLICT / CHANGED / MATCH cell states)
-15. Apply full motion spec from CLAUDE.md to all components:
-    - Spring config: stiffness 300, damping 30 everywhere
-    - Stagger formula: delay: Math.min(index * 0.04, 0.2)
-    - MotionConfig reducedMotion="user" in root layout
-16. Run /simplify then /lint-and-validate
-
-Design system: Clinical Precision palette + Syne/DM Sans/DM Mono (exact values in CLAUDE.md).
-Auth pages: skip — handled separately.
-Vercel target: no Node-only APIs, use useGSAP for SSR safety, dynamic import lenis with 'use client'.
+└── Skills.md                   ← custom skill specs for Claude Code
 ```
 
 ---
 
 ## Demo data
 
-The seed script populates the following drugs across payers:
+The following drugs are used for the live extraction demo with real public CPBs:
 
-| Drug | Class | J-Code | Payers seeded |
+| Drug | Class | J-Code | Source |
 |---|---|---|---|
-| Humira (adalimumab) | Immunology | J0135 | All 8 |
-| Keytruda (pembrolizumab) | Oncology | J9271 | All 8 |
-| Dupixent (dupilumab) | Dermatology | J0173 | 6 of 8 |
-| Stelara (ustekinumab) | Immunology | J3357 | 6 of 8 |
-| Enbrel (etanercept) | Rheumatology | J1438 | 5 of 8 |
+| Humira (adalimumab) | Immunology | J0135 | UHC — uhcprovider.com |
+| Keytruda (pembrolizumab) | Oncology | J9271 | Aetna — aetna.com/cpb |
+| Dupixent (dupilumab) | Dermatology | J0173 | Cigna — cigna.com |
 
-For the live extraction demo, use these real public CPBs:
-- UHC Humira: search "UnitedHealthcare Humira clinical policy" on uhcprovider.com
-- Aetna Keytruda: search "Aetna Keytruda CPB" on aetna.com/cpb
-- Cigna Dupixent: search "Cigna Dupixent coverage policy" on cigna.com
+These cover different drug classes and PA structures for maximum extraction variety.
 
 ---
 
@@ -236,16 +174,19 @@ For the live extraction demo, use these real public CPBs:
 vercel --prod
 
 # Or connect repo to Vercel dashboard and set env vars:
+# NEXT_PUBLIC_SUPABASE_URL
+# NEXT_PUBLIC_SUPABASE_ANON_KEY
+# SUPABASE_SERVICE_ROLE_KEY
 # ANTHROPIC_API_KEY
-# DATABASE_URL (Postgres)
-# Auth provider keys
+# VOYAGE_API_KEY
 ```
 
 Vercel compatibility notes:
-- Framer Motion: zero issues (client component, `'use client'` directive required)
-- GSAP: zero issues (use `useGSAP` hook for SSR safety)
+- Framer Motion: zero issues (`'use client'` directive required)
+- GSAP: use `useGSAP` hook for SSR safety — never raw `useEffect`
+- Lenis: dynamic import only — `const Lenis = (await import('lenis')).default`
 - Anthropic SDK: server-side only — never import in client components
-- Prisma: use Prisma Accelerate or connection pooling for Postgres on Vercel serverless
+- Supabase: use `supabase-server.ts` for server components and API routes; `supabase.ts` (browser client) for client components only
 
 ---
 
@@ -253,16 +194,11 @@ Vercel compatibility notes:
 
 | Role | Owner |
 |---|---|
-| Flight control software + autonomy, frontend | Brandon R. |
-| Auth wiring, backend API | Teammate |
-| Design system implementation, component polish | Teammate |
+| Backend API, auth wiring, policy ingestion | Reem |
+| Policy comparison, frontend | Ruthvik / Aryan |
+| Design system, component polish | Brandon |
 
 Design source of truth: Figma file (see `anton-cx-wireframes.svg` in project root)
 Motion spec: `CLAUDE.md` → Motion spec section
-Component handoff notes: `SKILLS.md` → Design system skill
+Component handoff notes: `Skills.md` → Design system skill
 Skill install sequence: `CLAUDE.md` → Skill install sequence section
-
-Recommended plugins (install inside Claude Code before first session):
-- `/plugin install claude-md-management@claude-plugins-official` — keeps CLAUDE.md current
-- `/plugin install chrome@claude-plugins-official` — visual verification of rendered UI
-- `/plugin install playwright@claude-plugins-official` — E2E testing
