@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 // ── Policy changes endpoint — queries policies with non-empty changed_fields ──
 
 import { NextResponse } from "next/server";

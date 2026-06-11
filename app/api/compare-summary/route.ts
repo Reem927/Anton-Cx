@@ -1,5 +1,8 @@
+export const dynamic = "force-dynamic";
+
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -7,6 +10,18 @@ const anthropic = new Anthropic({
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "anon";
+    const rl = await checkRateLimit("compare-summary", ip);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: "Too many summary requests. Try again later." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(Math.ceil((rl.resetAt - Date.now()) / 1000)) },
+        }
+      );
+    }
+
     const body = await request.json();
     const { drugName, rows } = body;
 
