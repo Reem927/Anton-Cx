@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 // ── Policy search endpoint — queries both policy tables ──────────────
 
 import { NextRequest, NextResponse } from "next/server";

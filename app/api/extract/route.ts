@@ -1,11 +1,26 @@
+export const dynamic = "force-dynamic";
+
 import { NextRequest, NextResponse } from 'next/server';
 import { extractFromPdf } from '@/lib/extraction';
 import { createClient } from '@/lib/supabase-server';
 import { getChangedFields } from '@/lib/diff';
+import { checkRateLimit } from '@/lib/rate-limit';
 import type { PolicyDocument } from '@/lib/types';
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "anon";
+    const rl = await checkRateLimit("extract", ip);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: "Too many extraction requests. Try again shortly." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(Math.ceil((rl.resetAt - Date.now()) / 1000)) },
+        }
+      );
+    }
+
     const supabase = await createClient();
     const body = await request.json() as {
       pdf:       string;

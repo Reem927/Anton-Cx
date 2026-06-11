@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 // ── POST /api/ingest ────────────────────────────────────────────────
 // Policy ingestion endpoint. Three modes:
 //   1. auto_fetch  — drug name/HCPCS + payer → MCP server → Claude → Supabase
@@ -14,6 +16,7 @@ import { extractFromPdf, extractFromText } from '@/lib/extraction';
 import { fetchPolicyFromMcp, scrapeDirectUrl } from '@/lib/mcp/policy-fetch';
 import { saveMedicalPolicy, savePharmacyPolicy } from '@/lib/db/policies';
 import { createClient } from '@/lib/supabase-server';
+import { checkRateLimit } from '@/lib/rate-limit';
 import type { IngestionSource } from '@/lib/types/policy';
 
 /**
@@ -48,6 +51,18 @@ interface IngestBody {
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "anon";
+    const rl = await checkRateLimit("ingest", ip);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: "Too many ingestion requests. Try again later." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(Math.ceil((rl.resetAt - Date.now()) / 1000)) },
+        }
+      );
+    }
+
     const body = (await request.json()) as IngestBody;
 
     if (!body.source || !['pdf_upload', 'url_paste', 'auto_fetch'].includes(body.source)) {
