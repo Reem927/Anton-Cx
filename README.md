@@ -195,7 +195,9 @@ Vercel compatibility notes:
 | Role | Owner |
 |---|---|
 | Backend API, auth wiring, policy ingestion | Reem |
-| Policy comparison, frontend | Ruthvik / Aryan |
+| Database design and policy extraction schema | Ruthvik / Reem |
+| Scraper service deployment and integration, drug policy search, and policy update tracking | Ruthvik |
+| Policy comparison and frontend | Aryan |
 | Design system, component polish | Brandon |
 
 Design source of truth: Figma file (see `anton-cx-wireframes.svg` in project root)
